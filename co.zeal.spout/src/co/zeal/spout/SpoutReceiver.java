@@ -11,6 +11,7 @@ import processing.core.*;
 import processing.opengl.*;
 import co.zeal.spout.JSpout;
 
+@Deprecated
 public class SpoutReceiver {
 
 	// protected PApplet parent;

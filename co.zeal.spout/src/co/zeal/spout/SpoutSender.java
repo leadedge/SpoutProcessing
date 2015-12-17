@@ -11,6 +11,7 @@ import processing.core.*;
 import processing.opengl.*;
 import co.zeal.spout.JSpout;
 
+@Deprecated
 public class SpoutSender {
 
 	// protected PApplet parent;
@@ -44,6 +45,7 @@ public class SpoutSender {
 	// otherwise it defaults to memoryshare mode
 	private boolean createSender(String name, int Width, int Height) {
 		bInitialized = JSpout.createSender(name, Width, Height);
+	    senderName = name;
 		spoutReport(bInitialized); // console report
 		return bInitialized;
 	}

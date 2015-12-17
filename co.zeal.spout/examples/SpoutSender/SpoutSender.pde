@@ -6,14 +6,14 @@
 //           spout.zeal.co
 //
 
-// import the spout library
+// Spout Library
 import co.zeal.spout.*;
 
 PImage img; // image to use for the rotating cube demo
 PGraphics pgr; // Graphics for demo
 
 // DECLARE A SPOUT OBJECT HERE
-SpoutSender spoutS;
+Spout spout;
 
 void setup() {
 
@@ -24,8 +24,10 @@ void setup() {
   textureMode(NORMAL);
     
   // CREATE A NEW SPOUT OBJECT HERE
+  spout = new Spout(this);
+
   // INITIALIZE A SPOUT SENDER HERE
-  spoutS = new SpoutSender(this, "Spout Processing", width, height);
+  spout.createSender("Spout Processing", width, height);
   
 } 
 
@@ -42,7 +44,7 @@ void draw()  {
     scale(110);
     TexturedCube(img);
     popMatrix();
-    spoutS.sendTexture(); // Sends at the size of the window
+    spout.sendTexture(); // Sends at the size of the window
 
     
     /*
@@ -61,13 +63,13 @@ void draw()  {
     pgr.box(pgr.width/4); // box is not textured
     popMatrix();
     pgr.endDraw();
-    spoutS.sendTexture(pgr); // Sends at the size of the graphics
+    spout.sendTexture(pgr); // Sends at the size of the graphics
     image(pgr, 0, 0, width, height); // Fit to the window
     */
     
     /*
     // OPTION 3: SEND THE TEXTURE OF AN IMAGE
-    spoutS.sendTexture(img); // Sends at the size of the image
+    spout.sendTexture(img); // Sends at the size of the image
     image(img, 0, 0, width, height); // Fit to the window
     */
     
