@@ -64,7 +64,7 @@
 
 
 	<path id="classpath">
-		<fileset dir="${classpath.libraries.location}" includes="**/*.jar" />
+		<!--fileset dir="${classpath.libraries.location}" includes="**/*.jar" /-->
 		<fileset dir="${project.lib}" includes="**/*.jar" />
 	</path>		
 
