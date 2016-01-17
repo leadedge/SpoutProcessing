@@ -5,28 +5,32 @@
 //
 //           spout.zeal.co
 //
+//      Based on a Processing example sketch by by Dave Bollinger
+//      http://processing.org/examples/texturecube.html
+//
 
-// Spout Library
+// IMPORT THE SPOUT LIBRARY
 import co.zeal.spout.*;
 
 PImage img; // image to use for the rotating cube demo
 PGraphics pgr; // Graphics for demo
 
-// DECLARE A SPOUT OBJECT HERE
+// DECLARE A SPOUT OBJECT
 Spout spout;
 
 void setup() {
 
+  // Initial window size
   size(640, 360, P3D);
   pgr = createGraphics(640, 360, P3D);
   
   img = loadImage("SpoutLogoMarble3.bmp");
   textureMode(NORMAL);
     
-  // CREATE A NEW SPOUT OBJECT HERE
+  // CREATE A NEW SPOUT OBJECT
   spout = new Spout(this);
-
-  // INITIALIZE A SPOUT SENDER HERE
+  
+  // CREATE A SPOUT SENDER
   spout.createSender("Spout Processing", width, height);
   
 } 

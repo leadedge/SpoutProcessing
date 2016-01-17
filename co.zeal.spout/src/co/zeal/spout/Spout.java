@@ -71,9 +71,10 @@ public class Spout{
 		dim[1] = 0; // Sender height
 		bInitialized = false;
 		senderName = "";
-		invertMode = -1; // User has not set any mode - use ction defaults
+		invertMode = -1; // User has not set any mode - use function defaults
 		
 		parent.registerMethod("closeSender", this);
+		
 	}  
 
 	// =========================================== //
@@ -94,6 +95,7 @@ public class Spout{
 	 * @return
 	 */
 	public boolean createSender(String name, int Width, int Height) {
+		// System.out.println("createSender " + name);
 		bInitialized = JSpout.createSender(name, Width, Height);
 		senderName = name;
 		spoutReport(bInitialized); // console report
@@ -106,9 +108,17 @@ public class Spout{
 	 */
 	public void closeSender() {
 		if(JSpout.releaseSender())
-			parent.println("Sender closed");
+			parent.println("Sender was closed");
 		else
 			parent.println("No sender to close");
+		
+		// DEBUG - also in JSpout releaseSender
+		if(JSpout.closeControls())
+			parent.println("Controls closed");
+		else
+			parent.println("Controls not closed");
+			
+		
 	} 
 
 	
@@ -170,9 +180,8 @@ public class Spout{
 		JSpout.sendTexture(tex.glWidth, tex.glHeight, tex.glName, tex.glTarget, bInvert);
 	}
 
-	//  
+	
 	// SPOUTCONTROLS
-	//
 
 	public boolean createSpoutControl(String name, String type) {
 		return(JSpout.createControl(name, type, 0, 1, 1, ""));
@@ -198,13 +207,16 @@ public class Spout{
 		return JSpout.checkControls(controlName, controlType, controlValue, controlText);
 	}
 
+	public boolean openController() {
+		// System.out.println("openController");
+		return(JSpout.openController());
+	}
+	
 	public boolean closeSpoutControls() {
 		return(JSpout.closeControls());
 	}
 
-	//
-	//  SHARED MEMORY
-	//
+	// SHARED MEMORY
 
 	public boolean createSenderMemory(String name, int Width, int Height) 
 	{
@@ -236,7 +248,7 @@ public class Spout{
 		JSpout.unlockSenderMemory();
 	}
 
-
+	
 	// =========================================== //
 	//                   RECEIVER                  //
 	// =========================================== //
@@ -409,6 +421,7 @@ public class Spout{
 		}
 	}
 
+	
 	// =========================================== //
 	//                   UTILITY                   //
 	// =========================================== //
@@ -472,7 +485,7 @@ public class Spout{
 			return true;
 		}
 		else { // the sender has closed
-			parent.println("Sender closed");
+			parent.println("Sender has closed");
 			senderName = "";
 			bInitialized = false;
 		}

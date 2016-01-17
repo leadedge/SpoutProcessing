@@ -1,4 +1,3 @@
-
 //
 //             SpoutReceiver
 //
@@ -7,13 +6,13 @@
 //             spout.zeal.co
 //
 
-// Spout Library
+// IMPORT THE SPOUT LIBRARY
 import co.zeal.spout.*;
 
 PGraphics pgr; // Canvas to receive a texture
 PImage img; // Image to receive a texture
 
-// DECLARE A SPOUT OBJECT HERE
+// DECLARE A SPOUT OBJECT
 Spout spout;
 
 void setup() {
@@ -22,16 +21,17 @@ void setup() {
   size(640, 360, P3D);
   
   // Needed for resizing the window to the sender size
+  // Processing 3+
   surface.setResizable(true);
    
   // Create a canvas or an image to receive the data.
   pgr = createGraphics(width, height, PConstants.P2D);
   img = createImage(width, height, ARGB);
   
-  // CREATE A NEW SPOUT OBJECT HERE
+  // CREATE A NEW SPOUT OBJECT
   spout = new Spout(this);
   
-  // INITIALIZE A SPOUT RECEIVER HERE
+  // INITIALIZE A SPOUT RECEIVER
   // Give it the name of the sender you want to connect to
   // Otherwise it will connect to the active sender
   spout.createReceiver("");
@@ -43,7 +43,7 @@ void draw() {
     background(0);
   
     //
-    // RECEIVE A SHARED TEXTURE HERE
+    // RECEIVE A SHARED TEXTURE
     //
     
     // OPTION 1: Receive and draw the received texture
@@ -64,9 +64,10 @@ void draw() {
 
 // RH click to select a sender
 void mousePressed() {
-  // SELECT A SPOUT SENDER HERE
+  // SELECT A SPOUT SENDER
   if (mouseButton == RIGHT) {
     // Bring up a dialog to select a sender.
+    // Spout installation required
     spout.selectSender();
   }
 }
