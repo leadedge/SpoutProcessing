@@ -3,11 +3,6 @@
 //
 //      Example of a controlled sender.
 //
-//      After it is running start a Spout Controller :
-//      "SpoutController.dll" freeframe plugin running in a host
-//        or
-//      "spoutController.exe" controller program.
-//
 //      Based on a Processing example sketch by by Dave Bollinger
 //      http://processing.org/examples/texturecube.html
 //
@@ -63,16 +58,13 @@ void setup() {
   spout.createSpoutControl("Rotate", "bool", 1); bRotate = true;
   spout.createSpoutControl("Speed", "float", 0, 4, 1); RotationSpeed = 1.0;
   
-  // OPEN THE CONTROLS FOR THE CONTROLLER TO USE
+  // OPEN THE CONTROLS FOR THE CONTROLLER
   // use the sketch name for multiple controlled senders
   spout.openSpoutControls("SpoutControl");
   
 } 
 
 void draw()  { 
-  
-    // Open the Spout controller
-    // if(frameCount == 1) spout.openController();
   
     // CHECK FOR UPDATED CONTROLS FROM THE CONTROLLER
     int nControls = spout.checkSpoutControls(controlName, controlType, controlValue, controlText);
@@ -174,13 +166,14 @@ void TexturedCube(PImage tex) {
   endShape();
 }
 
-// RH click to open the stand-alone controller
+// OPEN THE SPOUT CONTROLLER
+// SpoutControls installation required
 // Not necessary for the SpoutController Freeframe dll
+// RH click to open the stand-alone controller
+// RH click again to hide/show the controller
+// The controller is closed when the sketch is 
+// stopped or closed
 void mousePressed() {
-  // OPEN THE SPOUT CONTROLLER
-  // Bring up a the SpoutController dialog
-  // Spout installation required
-  // ESCAPE key while using the controller to close it
   if (mouseButton == RIGHT) {
     spout.openController();
   }

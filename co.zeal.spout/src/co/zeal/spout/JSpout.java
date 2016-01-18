@@ -48,7 +48,7 @@ public class JSpout {
 
   public static native int checkControls(String[] name, int[] type, float[] value, String[] text);
   
-  public static native boolean openController();
+  public static native boolean openController(String path);
 
   public static native boolean closeControls();
   

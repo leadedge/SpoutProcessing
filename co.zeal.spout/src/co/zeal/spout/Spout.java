@@ -42,6 +42,8 @@ import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.core.PImage;
 import processing.opengl.*;
+import java.awt.*;
+
 
 /**
  * Main Class to use with Processing
@@ -73,10 +75,12 @@ public class Spout{
 		senderName = "";
 		invertMode = -1; // User has not set any mode - use function defaults
 		
+		// This gets called when the user closes the sketch window
 		parent.registerMethod("closeSender", this);
 		
 	}  
 
+	
 	// =========================================== //
 	//                   SENDER                    //
 	// =========================================== //
@@ -95,7 +99,7 @@ public class Spout{
 	 * @return
 	 */
 	public boolean createSender(String name, int Width, int Height) {
-		// System.out.println("createSender " + name);
+		System.out.println("createSender " + name);
 		bInitialized = JSpout.createSender(name, Width, Height);
 		senderName = name;
 		spoutReport(bInitialized); // console report
@@ -108,20 +112,10 @@ public class Spout{
 	 */
 	public void closeSender() {
 		if(JSpout.releaseSender())
-			parent.println("Sender was closed");
+			System.out.println("Sender was closed");
 		else
-			parent.println("No sender to close");
-		
-		// DEBUG - also in JSpout releaseSender
-		if(JSpout.closeControls())
-			parent.println("Controls closed");
-		else
-			parent.println("Controls not closed");
-			
-		
+			System.out.println("No sender to close");
 	} 
-
-	
 
 
 	/**
@@ -208,8 +202,8 @@ public class Spout{
 	}
 
 	public boolean openController() {
-		// System.out.println("openController");
-		return(JSpout.openController());
+		// System.out.println("openController [" + parent.sketchPath() + "]");
+		return(JSpout.openController(parent.sketchPath()));
 	}
 	
 	public boolean closeSpoutControls() {
@@ -290,7 +284,7 @@ public class Spout{
 			// dim will be returned with ths size of the sender it connected to
 			if(newname != null && newname.length() > 0 && !newname.equals(senderName)) {
 				senderName = newname;
-				parent.println("Found sender : " + senderName + " (" + dim[0] + "x" + dim[1] + ")" );
+				System.out.println("Found sender : " + senderName + " (" + dim[0] + "x" + dim[1] + ")" );
 				if(!bInitialized) {
 					bInitialized = true;
 					spoutReport(bInitialized);
@@ -309,9 +303,9 @@ public class Spout{
 
 	public void closeReceiver() {
 		if(JSpout.releaseReceiver())
-			parent.println("Receiver closed");
+			System.out.println("Receiver closed");
 		else
-			parent.println("No receiver to close");
+			System.out.println("No receiver to close");
 	} 
 
 	/**
@@ -479,13 +473,13 @@ public class Spout{
 				dim[0] = newdim[0];
 				dim[1] = newdim[1];
 				senderName = newname;
-				parent.println("Found sender : " + senderName + " (" + dim[0] + "x" + dim[1] + ")" );
+				System.out.println("Found sender : " + senderName + " (" + dim[0] + "x" + dim[1] + ")" );
 			}
 			// The sender has not changed
 			return true;
 		}
 		else { // the sender has closed
-			parent.println("Sender has closed");
+			System.out.println("Sender has closed");
 			senderName = "";
 			bInitialized = false;
 		}
@@ -506,12 +500,12 @@ public class Spout{
 		if(bInit) {
 			bMemoryMode = JSpout.getMemoryShareMode();
 			if(bMemoryMode)
-				parent.println("Spout initialized memory sharing");
+				System.out.println("Spout initialized memory sharing");
 			else
-				parent.println("Spout initialized texture sharing");
+				System.out.println("Spout initialized texture sharing");
 		}
 		else {
-			parent.println("Spout intialization failed");
+			System.out.println("Spout intialization failed");
 		}
 	}
 
