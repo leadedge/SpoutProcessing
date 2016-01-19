@@ -4,37 +4,13 @@ package co.zeal.spout;
 //
 //                  Spout.Java
 //
-//    Adds support to the basic functions of the Spout library.
+//    Adds support to the functions of the JSpout JNI library.
 //
-//    07.05.14 - updated for screen resize with sender change
-//             - updated Jspout ReadTexture as well
-//    06.08-14 - updated for Spout SDK
-//    05.09.14 - update with revised SDK
-//    12.10.14 - recompiled for release
-//    04.02.15 - receiver screen resize in sketch instead of in this class
-//    29.06.15 - added SpoutControls
-//    22.07.15 - included "CreateControl" for SpoutControls
-//    12.10.15 - change Jspout dll function names :
-//               InitReciever > CreateReceiver
-//               InitSender > CreateSender
-//               WriteTexture > SendTexture
-//               ReadTexture > ReceiveImage
-//             - added GetMemoryShareMode
-//             - revise this class code for Spout 2.005
-//    14.10.15 - change ReceiveTexture to "ReceiveGraphics" and
-//             - transfer directly to the graphics or image texture
-//             - Manage frame window resizing within this class
-//    15.10.15 - updated for Spout 2.005
-//    26.10.15 - Added SendTexture for PGraphics and PImage
-//             - Added user setting for texture inversion 
-//    27.10.15 - updated for Processing 3
-//    10.11.15 - added shared memory functions
-//    17.11.15 - revised to use Spout Library
-//    18.11.15 - added CheckReceiver for ReceiveTexture/DrawSharedTexture
-//    15.12.15 - change all function names to start with lower case
-//    16.12.15 - Reorganise and cleanup
-//    17.12.15 - Moved it into a Library class
-//				 added dispose functionality, so the sketch cleans up after beeing stoped
+//    19.12.15 - Finalised Library class
+//			   - Changed all parent.println to System.out.println to prevent compiler warning
+//			   - Changed "(boolean)(invertMode == 1)" to "(invertMode == 1)" to prevent compiler warning
+//			   - Documented all functions
+//			   - Cleanup - previous revisions in older Spout.pde file
 //
 
 import processing.core.PApplet;
@@ -75,9 +51,6 @@ public class Spout{
 		senderName = "";
 		invertMode = -1; // User has not set any mode - use function defaults
 		
-		// This gets called when the user closes the sketch window
-		parent.registerMethod("closeSender", this);
-		
 	}  
 
 	
@@ -93,10 +66,10 @@ public class Spout{
 	 * the graphic hardware is compatible, otherwise
 	 * it defaults to memoryshare mode
 	 *  
-	 * @param name
-	 * @param Width
-	 * @param Height
-	 * @return
+	 * @param name sender name (up to 256 characters)
+	 * @param Width sender width
+	 * @param Height sender height
+	 * @return true if the sender was created
 	 */
 	public boolean createSender(String name, int Width, int Height) {
 		System.out.println("createSender " + name);
@@ -108,7 +81,9 @@ public class Spout{
 
 
 	/**
-	 * closes the sender. this method will be called when the sketch closes.
+	 * Close the sender. 
+	 * This releases the sender name from the list if senders
+	 * and releases all resources for the sender.
 	 */
 	public void closeSender() {
 		if(JSpout.releaseSender())
@@ -121,7 +96,6 @@ public class Spout{
 	/**
 	 *	Write the sketch drawing surface texture to 
 	 *	an opengl/directx shared texture
-	 * 
 	 */
 	public void sendTexture() {
 
@@ -131,7 +105,7 @@ public class Spout{
 		// Processing Y axis is inverted with respect to OpenGL
 		// so we need to invert the texture for this function
 		boolean bInvert = true; 
-		if(invertMode >= 0) bInvert = (boolean)(invertMode == 1);
+		if(invertMode >= 0) bInvert = (invertMode == 1);
 
 		pgl.beginPGL();
 		// Load the current contents of the renderer's
@@ -149,13 +123,13 @@ public class Spout{
 
 	/**
 	 * Write the texture of a graphics object
-	 * @param pgr
+	 * @param pgr - the graphics object to be used
 	 */
 	public void sendTexture(PGraphics pgr)
 	{
 		if(!bInitialized) return;
 		boolean bInvert = true;
-		if(invertMode >= 0) bInvert = (boolean)(invertMode == 1);
+		if(invertMode >= 0) bInvert = (invertMode == 1);
 		Texture tex = pgl.getTexture(pgr);
 		JSpout.sendTexture(tex.glWidth, tex.glHeight, tex.glName, tex.glTarget, bInvert);
 	}
@@ -163,80 +137,155 @@ public class Spout{
 
 	/**
 	 *  Write the texture of an image object
-	 * @param img
+	 * @param img - the image to be used
 	 */
 	public void sendTexture(PImage img)
 	{
 		if(!bInitialized) return;
 		boolean bInvert = false; // default for this function
-		if(invertMode >= 0) bInvert = (boolean)(invertMode == 1);
+		if(invertMode >= 0) bInvert = (invertMode == 1);
 		Texture tex = pgl.getTexture(img);
 		JSpout.sendTexture(tex.glWidth, tex.glHeight, tex.glName, tex.glTarget, bInvert);
 	}
 
 	
 	// SPOUTCONTROLS
-
+	/**
+	 * Create a control with defaults
+	 * @param name control name
+	 * @param type text (string), bool (checkbox), event (button), float (value)
+	 * @return true for success
+	 */
 	public boolean createSpoutControl(String name, String type) {
 		return(JSpout.createControl(name, type, 0, 1, 1, ""));
 	}
 
+	/**
+	 * Create a control with default value
+	 * @param name control name
+	 * @param type float, bool, event
+	 * @return true for success
+	 */
 	public boolean createSpoutControl(String name, String type, float value) {
 		return(JSpout.createControl(name, type, 0, 1, value, ""));
 	}
 
-	public boolean createSpoutControl(String name, String type, String text) {
+	/**
+	 * Create a text control with default string
+	 * @param name control name
+	 * @param type text
+	 * @return true for success
+	 */	public boolean createSpoutControl(String name, String type, String text) {
 		return(JSpout.createControl(name, type, 0, 1, 1, text));
 	}
 
-	public boolean createSpoutControl(String name, String type, float minimum, float maximum, float value) {
+		/**
+		 * Create a float control with defaults
+		 * Minimum, Maximum, Default
+		 * @param name control name
+		 * @param type float
+		 * @return true for success
+		 */	public boolean createSpoutControl(String name, String type, float minimum, float maximum, float value) {
 		return(JSpout.createControl(name, type, minimum, maximum, value, ""));
 	}
 
+	/**
+	 * A sender creates the controls and then calls OpenControls with a control name
+	 * so that the controller can set up a memory map and share data with the sender
+	 * as it changes the controls.
+	 * @param name control map name (the sender name)
+	 * @return true for success
+	 */
 	public boolean openSpoutControls(String name) {
 		return(JSpout.openControls(name));
 	}
-
+	
+	/**
+	 * Check the controller for changed controls
+	 * The value or text string are changed depending on the control type.
+	 * @param controlName
+	 * @param controlType
+	 * @param controlValue
+	 * @param controlText
+	 * @return The number of controls. Zero if no change.
+	 */
 	public int checkSpoutControls(String[] controlName, int[] controlType, float[] controlValue, String[] controlText ) {
 		return JSpout.checkControls(controlName, controlType, controlValue, controlText);
 	}
-
+	
+	/**
+	 * Open the SpoutController executable to allow controls to be changed
+	 * Requires SpoutControls installation
+	 * @return true if the controller was found and opened
+	 */
 	public boolean openController() {
 		// System.out.println("openController [" + parent.sketchPath() + "]");
 		return(JSpout.openController(parent.sketchPath()));
 	}
 	
+	/**
+	 * Close the link with the controller
+	 * @return true for success
+	 */
 	public boolean closeSpoutControls() {
 		return(JSpout.closeControls());
 	}
 
 	// SHARED MEMORY
-
+	/**
+	 * Create a sender memory map
+	 * @param name sender name
+	 * @param Width map width
+	 * @param Height map height
+	 * @return True for success
+	 */
 	public boolean createSenderMemory(String name, int Width, int Height) 
 	{
 		return (JSpout.createSenderMemory(name, Width, Height));
 	}
-
+	
+	/**
+	 * Change the size of a sender memory map
+	 * @param name Sender name
+	 * @param Width New map width
+	 * @param Height New map height
+	 * @return True for success
+	 */
 	public boolean updateSenderMemorySize(String name, int Width, int Height) 
 	{
 		return (JSpout.updateSenderMemorySize(name, Width, Height));
 	}
-
+	
+	/**
+	 * Write a string to the memory map
+	 * The map size must be sufficient for the string.
+	 * @param sValue String to be written
+	 * @return True for success
+	 */
 	public boolean writeSenderString(String sValue) 
 	{
 		return (JSpout.writeSenderString(sValue));
 	}
-
+	
+	/**
+	 * Close a sender memory map.
+	 */
 	public void closeSenderMemory() 
 	{
 		JSpout.closeSenderMemory();
 	}
-
+	/**
+	 * Lock a memory map for write or read access
+	 * @return Size of the memory map
+	 */
 	public long lockSenderMemory() 
 	{
 		return JSpout.lockSenderMemory();
 	}
 
+	/** Unlock a memory map after locking
+	 * 
+	 */
 	public void unlockSenderMemory() 
 	{
 		JSpout.unlockSenderMemory();
@@ -265,8 +314,8 @@ public class Spout{
 	 *  or, if no sender has been selected, this will be
 	 *  the first in the list if any are running.
 	 *  
-	 * @param name
-	 * @return
+	 * @param name sender name to be used (optional)
+	 * @return true if connection with a sender succeeded
 	 */
 	public boolean createReceiver(String name) {
 
@@ -301,6 +350,11 @@ public class Spout{
 	} // end Receiver initialization
 
 
+	/**
+	 * Close a receiver
+	 * All resources of the receiver are released.
+	 * 
+	 */
 	public void closeReceiver() {
 		if(JSpout.releaseReceiver())
 			System.out.println("Receiver closed");
@@ -311,8 +365,7 @@ public class Spout{
 	/**
 	 * Receive and draw the sender texture directly
 	 * Uses CheckReceiver to test for sender changes
-	 * 
-	 * @return
+	 * @return true if a texture was received
 	 */
 	public boolean receiveTexture()
 	{
@@ -323,7 +376,7 @@ public class Spout{
 		}
 
 		boolean bInvert = true;
-		if(invertMode >= 0) bInvert = (boolean)(invertMode == 1);
+		if(invertMode >= 0) bInvert = (invertMode == 1);
 
 		// Check the receiver for user selection
 		// No dimensions need to be updated
@@ -343,8 +396,8 @@ public class Spout{
 	 * Sender changes are detected in JSpout.ReceiveTexture
 	 * and returned. The PGraphics is resized the next time.
 	 * 
-	 * @param pg
-	 * @return
+	 * @param pg the graphics to be used and returned
+	 * @return true if a texture was returned
 	 */
 	public PGraphics receiveTexture(PGraphics pg)
 	{
@@ -356,7 +409,7 @@ public class Spout{
 		}
 
 		boolean bInvert = true; // default for this function
-		if(invertMode >= 0) bInvert = (boolean)(invertMode == 1);
+		if(invertMode >= 0) bInvert = (invertMode == 1);
 
 		// Adjust the graphics to the current sender size
 		if(dim[0] != pg.width || dim[1] != pg.height && dim[0] > 0 && dim[1] > 0) {
@@ -376,8 +429,8 @@ public class Spout{
 	/**
 	 * Receive into an image
 	 * 
-	 * @param img
-	 * @return
+	 * @param img the image to be used and returned
+	 * @return true if a texture was returned
 	 */
 	public PImage receiveTexture(PImage img) {
 
@@ -388,7 +441,7 @@ public class Spout{
 		}
 
 		boolean bInvert = false; // default for this function
-		if(invertMode >= 0) bInvert = (boolean)(invertMode == 1);
+		if(invertMode >= 0) bInvert = (invertMode == 1);
 
 		if(dim[0] != img.width || dim[1] != img.height && dim[0] > 0 && dim[1] > 0) {
 			img.resize(dim[0], dim[1]);
@@ -404,6 +457,7 @@ public class Spout{
 	/**
 	 * Pop up SpoutPanel to select a sender
 	 * If the user selected a different one, attach to it.
+	 * Requires Spout installation 2.004 or higher.
 	 */
 	public void selectSender()
 	{
@@ -422,7 +476,7 @@ public class Spout{
 
 	/**
 	 * User option to set texture inversion for send and receive
-	 * @param bInvert
+	 * @param bInvert true or false as required
 	 */
 	public void setInvert(boolean bInvert)
 	{
@@ -433,7 +487,10 @@ public class Spout{
 			invertMode = 0;
 	}
 
-
+	/**
+	 * Resize the receiver drawing surface and sketch window to that of the sender
+	 * Optional.
+	 */
 	public void resizeFrame()
 	{
 		if(!bInitialized) return;
@@ -450,12 +507,11 @@ public class Spout{
 
 	/**
 	 * Check the receiver for any sender changes
-	 * 
 	 *  This is normally done within JSpout.ReceiveTexture
 	 *  But is necessary if DrawSharedTexture is used instead.
 	 *  Returns a different name or dimensions if the sender has changed.
 	 *  The name is returned empty if the sender has closed.
-	 * @return
+	 * @return true for any changes
 	 */
 	public boolean checkReceiver() {
 
@@ -492,7 +548,7 @@ public class Spout{
 
 	/**
 	 * Prints current settings to the console
-	 * @param bInit
+	 * @param bInit The initialisation mode
 	 */
 	public void spoutReport(boolean bInit)
 	{

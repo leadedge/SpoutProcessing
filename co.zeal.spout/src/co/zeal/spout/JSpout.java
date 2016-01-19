@@ -16,16 +16,6 @@ public class JSpout {
 		System.loadLibrary("JSpout_32");
 	else if(sunDataModel.equals("64"))	
 		System.loadLibrary("JSpout_64");
-	  
-	  
-	/*
-	String dataModel = System.getProperty("os.arch");
-	System.out.println(dataModel);
-	if(dataModel.equals("x86_32"))	
-		System.loadLibrary("JSpout_32");
-	else if(dataModel.equals("x86_64") || dataModel.equals("amd64"))	
-		System.loadLibrary("JSpout_64");
-	*/
   }
   
   

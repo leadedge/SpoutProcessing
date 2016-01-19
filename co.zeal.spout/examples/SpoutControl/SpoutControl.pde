@@ -17,6 +17,7 @@ PFont f; // font for control text
 
 // DECLARE A SPOUT OBJECT
 Spout spout;
+String sendername;
 
 // CONTROL ARRAYS
 String[] controlName;
@@ -44,8 +45,9 @@ void setup() {
   spout = new Spout(this);
   
   // CREATE A SPOUT SENDER
-  // Make the name the same as the sketch
-  spout.createSender("SpoutControl", width, height);
+  // Use the same name as the sketch
+  sendername = "SpoutControl";
+  spout.createSender(sendername, width, height);
  
   // CREATE CONTROL ARRAYS
   controlName = new String[20];
@@ -59,8 +61,9 @@ void setup() {
   spout.createSpoutControl("Speed", "float", 0, 4, 1); RotationSpeed = 1.0;
   
   // OPEN THE CONTROLS FOR THE CONTROLLER
-  // use the sketch name for multiple controlled senders
-  spout.openSpoutControls("SpoutControl");
+  // Use the same name as the sketch
+  // for multiple controlled senders
+  spout.openSpoutControls(sendername);
   
 } 
 
@@ -175,6 +178,9 @@ void TexturedCube(PImage tex) {
 // stopped or closed
 void mousePressed() {
   if (mouseButton == RIGHT) {
-    spout.openController();
+    if(!spout.openController()) {
+      println("SpoutControls not installed");
+    }
+     
   }
 }
