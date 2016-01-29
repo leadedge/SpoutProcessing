@@ -13,9 +13,9 @@ public class JNISpout {
 	String sunDataModel = System.getProperty("sun.arch.data.model");
 	System.out.println("Java " + sunDataModel + "bit " + jvm_version);
 	if(sunDataModel.equals("32"))	
-		System.loadLibrary("JSpout_32");
+		System.loadLibrary("JNISpout_32");
 	else if(sunDataModel.equals("64"))	
-		System.loadLibrary("JSpout_64");
+		System.loadLibrary("JNISpout_64");
   }
   
   
