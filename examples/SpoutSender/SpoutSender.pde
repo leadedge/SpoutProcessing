@@ -10,7 +10,7 @@
 //
 
 // IMPORT THE SPOUT LIBRARY
-import co.zeal.spout.*;
+import spout.*;
 
 PImage img; // image to use for the rotating cube demo
 PGraphics pgr; // Graphics for demo

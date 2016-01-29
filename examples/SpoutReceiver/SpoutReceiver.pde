@@ -7,7 +7,7 @@
 //
 
 // IMPORT THE SPOUT LIBRARY
-import co.zeal.spout.*;
+import spout.*;
 
 PGraphics pgr; // Canvas to receive a texture
 PImage img; // Image to receive a texture
