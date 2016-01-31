@@ -269,10 +269,12 @@ ${line}
         <replaceregexp file="${file}" match="##date##" replace="${date}" flags="g" />
         <replaceregexp file="${file}" match="##copyright##" replace="${library.copyright}" flags="g" />
         
-    	<replaceregexp file="${file}" match="##author##" replace="${author.name} ${author.url}" flags="g" />
-    	<replaceregexp file="${file}" match="##author.name##" replace="${author.name}" flags="g" />
-    	<replaceregexp file="${file}" match="##author.url##" replace="${author.url}" flags="g" />
-    	        
+    	<replaceregexp file="${file}" match="##author##" replace="${author1.name} (${author1.url}) and ${author2.name} (${author2.url})" flags="g" />
+       	<replaceregexp file="${file}" match="##author1.name##" replace="${author1.name}" flags="g" />
+        <replaceregexp file="${file}" match="##author1.url##" replace="${author1.url}" flags="g" />
+       	<replaceregexp file="${file}" match="##author2.name##" replace="${author2.name}" flags="g" />
+        <replaceregexp file="${file}" match="##author2.url##" replace="${author2.url}" flags="g" />
+        	        
     	<replaceregexp file="${file}" match="##library.name##" replace="${project.prettyName}" flags="g" />
     	<replaceregexp file="${file}" match="##project.name##" replace="${project.name}" flags="g" />
     	        

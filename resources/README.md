@@ -35,4 +35,4 @@ Some folders like `examples` or `src` might be missing. After Library ##library.
 
 ### Troubleshooting
 
-If you're having trouble, have a look at the [Processing Wiki](https://github.com/processing/processing/wiki/How-to-Install-a-Contributed-Library) for more information, or contact the author [##author.name##](##author.url##).
+If you're having trouble, have a look at the [Processing Wiki](https://github.com/processing/processing/wiki/How-to-Install-a-Contributed-Library) for more information, or contact the author [##author##].
