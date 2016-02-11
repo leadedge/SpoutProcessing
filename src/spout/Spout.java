@@ -381,7 +381,7 @@ public class Spout{
 		// Check the receiver for user selection
 		// No dimensions need to be updated
 		if(checkReceiver()) {
-			// Then draw the shared texture
+			//  Then draw the shared texture
 			return JNISpout.drawTexture(bInvert);
 		}
 
