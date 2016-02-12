@@ -46,18 +46,16 @@ void draw() {
     // RECEIVE A SHARED TEXTURE
     //
     
-    // OPTION 1: Receive into PGraphics
-    pgr = spout.receiveTexture(pgr);
-    image(pgr, 0, 0, width, height);
+    // OPTION 1: Receive and draw the texture
+    spout.receiveTexture(); // Fills the window
 
-    // OPTION 2: Receive into PImage
+    // OPTION 2: Receive into PGraphics
+    // pgr = spout.receiveTexture(pgr);
+    // image(pgr, 0, 0, width, height);
+
+    // OPTION 3: Receive into PImage
     // img = spout.receiveTexture(img);
     // image(img, 0, 0, width, height);
-   
-    // OPTION 3: Receive and draw the received texture
-    // This is not guaranteed to work on some systems
-    // but could be useful, so is left for you to try
-    // spout.receiveTexture(); // Fills the window
     
     // Optionally resize the window to match the sender
     // spout.resizeFrame();

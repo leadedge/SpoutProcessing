@@ -4,21 +4,21 @@ package spout;
 //
 //                  Spout.Java
 //
-//    Adds support to the functions of the JSpout JNI library.
+//		Adds support to the functions of the JSpout JNI library.
 //
-//    19.12.15 - Finalised Library class
-//			   - Changed all parent.println to System.out.println to prevent compiler warning
-//			   - Changed "(boolean)(invertMode == 1)" to "(invertMode == 1)" to prevent compiler warning
-//			   - Documented all functions
-//			   - Cleanup - previous revisions in older Spout.pde file
+//		19.12.15 - Finalised Library class
+//				 - Changed all parent.println to System.out.println to prevent compiler warning
+//				 - Changed "(boolean)(invertMode == 1)" to "(invertMode == 1)" to prevent compiler warning
+//				 - Documented all functions
+//				 - Cleanup - previous revisions in older Spout.pde file
+//		12.02.16 - Changed "ReceiveTexture()" to update and draw a local graphics object
+//				 - Removed java.awt import - not needed for Processing 3 frame sizing
 //
-
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.core.PImage;
 import processing.opengl.*;
-import java.awt.*;
 
 
 /**
@@ -31,13 +31,17 @@ public class Spout{
 
 	PApplet parent;
 	PGraphicsOpenGL pgl;
+	PGraphics pgs; // local graphics object for receiving textures
 	String senderName; // the sender name
 	int[] dim = new int[2]; // Sender dimensions
 	boolean bInitialized; // initialization flag
 	int invertMode; // User setting for texture invert
 
 	/**
-	 * Creates a Spout Object. Currently it is only possible to create one such Object.
+	 * Creates a Spout Object.
+	 * 
+	 * Currently it is only possible to create one such Object.
+	 * 
 	 * @param parent
 	 */
 	public Spout (PApplet parent) {
@@ -59,9 +63,9 @@ public class Spout{
 	// =========================================== //
 
 	/**
-	 * Initialize a sender 
-	 * For texture sharing, the name provided
-	 * is registered in the list of senders
+	 * Initialize a sender for texture sharing.
+	 * 
+	 * The name provided is registered in the list of senders
 	 * Texture share initialization only succeeds if
 	 * the graphic hardware is compatible, otherwise
 	 * it defaults to memoryshare mode
@@ -82,6 +86,7 @@ public class Spout{
 
 	/**
 	 * Close the sender. 
+	 * 
 	 * This releases the sender name from the list if senders
 	 * and releases all resources for the sender.
 	 */
@@ -123,6 +128,7 @@ public class Spout{
 
 	/**
 	 * Write the texture of a graphics object
+	 * 
 	 * @param pgr - the graphics object to be used
 	 */
 	public void sendTexture(PGraphics pgr)
@@ -137,6 +143,7 @@ public class Spout{
 
 	/**
 	 *  Write the texture of an image object
+	 *  
 	 * @param img - the image to be used
 	 */
 	public void sendTexture(PImage img)
@@ -152,6 +159,7 @@ public class Spout{
 	// SPOUTCONTROLS
 	/**
 	 * Create a control with defaults
+	 * 
 	 * @param name control name
 	 * @param type text (string), bool (checkbox), event (button), float (value)
 	 * @return true for success
@@ -162,6 +170,7 @@ public class Spout{
 
 	/**
 	 * Create a control with default value
+	 * 
 	 * @param name control name
 	 * @param type float, bool, event
 	 * @return true for success
@@ -172,6 +181,7 @@ public class Spout{
 
 	/**
 	 * Create a text control with default string
+	 * 
 	 * @param name control name
 	 * @param type text
 	 * @return true for success
@@ -181,6 +191,7 @@ public class Spout{
 
 		/**
 		 * Create a float control with defaults
+		 * 
 		 * Minimum, Maximum, Default
 		 * @param name control name
 		 * @param type float
@@ -190,6 +201,8 @@ public class Spout{
 	}
 
 	/**
+	 * Open SpoutControls
+	 * 
 	 * A sender creates the controls and then calls OpenControls with a control name
 	 * so that the controller can set up a memory map and share data with the sender
 	 * as it changes the controls.
@@ -202,7 +215,9 @@ public class Spout{
 	
 	/**
 	 * Check the controller for changed controls
+	 * 
 	 * The value or text string are changed depending on the control type.
+	 * 
 	 * @param controlName
 	 * @param controlType
 	 * @param controlValue
@@ -215,7 +230,9 @@ public class Spout{
 	
 	/**
 	 * Open the SpoutController executable to allow controls to be changed
+	 * 
 	 * Requires SpoutControls installation
+	 * 
 	 * @return true if the controller was found and opened
 	 */
 	public boolean openController() {
@@ -225,6 +242,7 @@ public class Spout{
 	
 	/**
 	 * Close the link with the controller
+	 * 
 	 * @return true for success
 	 */
 	public boolean closeSpoutControls() {
@@ -234,6 +252,7 @@ public class Spout{
 	// SHARED MEMORY
 	/**
 	 * Create a sender memory map
+	 * 
 	 * @param name sender name
 	 * @param Width map width
 	 * @param Height map height
@@ -246,6 +265,7 @@ public class Spout{
 	
 	/**
 	 * Change the size of a sender memory map
+	 * 
 	 * @param name Sender name
 	 * @param Width New map width
 	 * @param Height New map height
@@ -258,6 +278,7 @@ public class Spout{
 	
 	/**
 	 * Write a string to the memory map
+	 * 
 	 * The map size must be sufficient for the string.
 	 * @param sValue String to be written
 	 * @return True for success
@@ -276,6 +297,7 @@ public class Spout{
 	}
 	/**
 	 * Lock a memory map for write or read access
+	 * 
 	 * @return Size of the memory map
 	 */
 	public long lockSenderMemory() 
@@ -296,15 +318,6 @@ public class Spout{
 	//                   RECEIVER                  //
 	// =========================================== //
 
-	//
-	// Initialize a Receiver 
-	//
-	// The name provided is searched in the list of senders
-	// and used if it is there. If not, the receiver will 
-	// connect to the active sender selected by the user
-	// or, if no sender has been selected, this will be
-	// the first in the list if any are running.
-	//
 	/**
 	 *  Initialize a Receiver 
 	 * 
@@ -330,7 +343,7 @@ public class Spout{
 		if(JNISpout.createReceiver(name, dim)) {
 			// Initialization succeeded and there was a sender running
 			newname = JNISpout.getSenderName();
-			// dim will be returned with ths size of the sender it connected to
+			// dim will be returned with the size of the sender it connected to
 			if(newname != null && newname.length() > 0 && !newname.equals(senderName)) {
 				senderName = newname;
 				System.out.println("Found sender : " + senderName + " (" + dim[0] + "x" + dim[1] + ")" );
@@ -352,6 +365,7 @@ public class Spout{
 
 	/**
 	 * Close a receiver
+	 * 
 	 * All resources of the receiver are released.
 	 * 
 	 */
@@ -363,8 +377,8 @@ public class Spout{
 	} 
 
 	/**
-	 * Receive and draw the sender texture directly
-	 * Uses CheckReceiver to test for sender changes
+	 * Receive into a local graphics object and draw it directly
+	 * 
 	 * @return true if a texture was received
 	 */
 	public boolean receiveTexture()
@@ -377,15 +391,22 @@ public class Spout{
 
 		boolean bInvert = true;
 		if(invertMode >= 0) bInvert = (invertMode == 1);
-
-		// Check the receiver for user selection
-		// No dimensions need to be updated
-		if(checkReceiver()) {
-			//  Then draw the shared texture
-			return JNISpout.drawTexture(bInvert);
+		
+		// Adjust the local graphics object to the current sender size
+		if(pgs == null || dim[0] != pgs.width || dim[1] != pgs.height && dim[0] > 0 && dim[1] > 0) {
+			pgs = parent.createGraphics(dim[0], dim[1], PConstants.P2D);
 		}
-
-		return false;
+		else {
+			// Receive into the local graphics object and draw it.
+			// Sender dimensions (dim) are sent as well as returned
+			// The graphics size is adjusted next time round
+			Texture tex = pgl.getTexture(pgs);
+			if(JNISpout.receiveTexture(dim, tex.glName, tex.glTarget, bInvert))
+				parent.image(pgs, 0, 0, parent.width, parent.height);
+			else
+				return false;
+		}
+		return true;
 
 	} // end receiveTexture
 
@@ -393,6 +414,7 @@ public class Spout{
 
 	/**
 	 * Receive into graphics
+	 * 
 	 * Sender changes are detected in JSpout.ReceiveTexture
 	 * and returned. The PGraphics is resized the next time.
 	 * 
@@ -456,6 +478,7 @@ public class Spout{
 
 	/**
 	 * Pop up SpoutPanel to select a sender
+	 * 
 	 * If the user selected a different one, attach to it.
 	 * Requires Spout installation 2.004 or higher.
 	 */
@@ -476,6 +499,7 @@ public class Spout{
 
 	/**
 	 * User option to set texture inversion for send and receive
+	 * 
 	 * @param bInvert true or false as required
 	 */
 	public void setInvert(boolean bInvert)
@@ -489,6 +513,8 @@ public class Spout{
 
 	/**
 	 * Resize the receiver drawing surface and sketch window to that of the sender
+	 * 
+	 * Requires Processing 3.
 	 * Optional.
 	 */
 	public void resizeFrame()
@@ -506,12 +532,14 @@ public class Spout{
 	// =========================================== //
 
 	/**
-	 * Check the receiver for any sender changes
+	 *  Check the receiver for any sender changes
+	 *  
 	 *  This is normally done within JSpout.ReceiveTexture
-	 *  But is necessary if DrawSharedTexture is used instead.
+	 *  But is necessary if the function is not used.
 	 *  Returns a different name or dimensions if the sender has changed.
 	 *  The name is returned empty if the sender has closed.
-	 * @return true for any changes
+	 *  
+	 *  @return true for any changes
 	 */
 	public boolean checkReceiver() {
 
@@ -548,6 +576,7 @@ public class Spout{
 
 	/**
 	 * Prints current settings to the console
+	 * 
 	 * @param bInit The initialisation mode
 	 */
 	public void spoutReport(boolean bInit)
