@@ -1,6 +1,6 @@
 package spout;
 
-//
+//========================================================================================================
 //
 //                  Spout.Java
 //
@@ -13,7 +13,11 @@ package spout;
 //				 - Cleanup - previous revisions in older Spout.pde file
 //		12.02.16 - Changed "ReceiveTexture()" to update and draw a local graphics object
 //				 - Removed java.awt import - not needed for Processing 3 frame sizing
-//
+//		15.02.16 - Removed "createSender" function console output
+//		26.02.16 - Updated JNISpout library dll files - tested Processing 3.0.2 64bit and 32bit 
+//				   Spout 2.005 SDK as at 26.02.16 - incremented library version number to 2.0.5.2
+// ========================================================================================================
+
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PGraphics;
@@ -76,7 +80,7 @@ public class Spout{
 	 * @return true if the sender was created
 	 */
 	public boolean createSender(String name, int Width, int Height) {
-		System.out.println("createSender " + name);
+		// System.out.println("createSender " + name);
 		bInitialized = JNISpout.createSender(name, Width, Height);
 		senderName = name;
 		spoutReport(bInitialized); // console report
