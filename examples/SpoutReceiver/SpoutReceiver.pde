@@ -21,20 +21,30 @@ void setup() {
   size(640, 360, P3D);
   
   // Needed for resizing the window to the sender size
-  // Processing 3+
+  // Processing 3+ only
   surface.setResizable(true);
    
   // Create a canvas or an image to receive the data.
   pgr = createGraphics(width, height, PConstants.P2D);
   img = createImage(width, height, ARGB);
   
+  // Graphics and image objects can be created
+  // at any size, but their dimensions are changed
+  // to match the sender that the receiver connects to.
+  
   // CREATE A NEW SPOUT OBJECT
   spout = new Spout(this);
   
-  // INITIALIZE A SPOUT RECEIVER
-  // Give it the name of the sender you want to connect to
-  // Otherwise it will connect to the active sender
-  spout.createReceiver("");
+  // OPTION : CREATE A NAMED SPOUT RECEIVER
+  //
+  // By default the active sender will be detected
+  // when receiveTexture is called.
+  //
+  // But you can specify the name of the sender
+  // to connect to. That sender must be running
+  // when the sketch starts.
+  //
+  // spout.createReceiver("Spout DX11 Sender");
  
 } 
 
@@ -47,7 +57,7 @@ void draw() {
     //
     
     // OPTION 1: Receive and draw the texture
-    spout.receiveTexture(); // Fills the window
+    spout.receiveTexture();
 
     // OPTION 2: Receive into PGraphics
     // pgr = spout.receiveTexture(pgr);

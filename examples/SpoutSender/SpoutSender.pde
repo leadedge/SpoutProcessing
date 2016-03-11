@@ -22,16 +22,28 @@ void setup() {
 
   // Initial window size
   size(640, 360, P3D);
-  pgr = createGraphics(640, 360, P3D);
-  
-  img = loadImage("SpoutLogoMarble3.bmp");
   textureMode(NORMAL);
+  
+  // Create a graphics object
+  pgr = createGraphics(1280, 720, P3D);
+  
+  // Load an image
+  img = loadImage("SpoutLogoMarble3.bmp");
+  
+  // The dimensions of graphics or image objects
+  // do not have to be the same as the sketch window
     
   // CREATE A NEW SPOUT OBJECT
   spout = new Spout(this);
   
-  // CREATE A SPOUT SENDER
-  spout.createSender("Spout Processing", width, height);
+  // OPTION : CREATE A NAMED SENDER
+  //
+  // By default, a sender is created
+  // the first time "sendTexture" is called
+  // and the sketch folder name is used.
+  // But a sender can be created now with any name.
+  //
+  // spout.createSender("Spout Processing");
   
 } 
 
@@ -48,8 +60,9 @@ void draw()  {
     scale(110);
     TexturedCube(img);
     popMatrix();
-    spout.sendTexture(); // Sends at the size of the window
-
+    
+    // Sends at the size of the window    
+    spout.sendTexture();
     
     /*
     // OPTION 2: SEND THE TEXTURE OF GRAPHICS
@@ -57,8 +70,6 @@ void draw()  {
     pgr.lights();
     pgr.background(0, 90, 100);
     pgr.fill(255);
-    pgr.textSize(16);
-    pgr.text(frameCount, 92, 50);
     pushMatrix();
     pgr.translate(pgr.width/2, pgr.height/2);
     pgr.rotateX(frameCount/100.0);
@@ -67,14 +78,16 @@ void draw()  {
     pgr.box(pgr.width/4); // box is not textured
     popMatrix();
     pgr.endDraw();
-    spout.sendTexture(pgr); // Sends at the size of the graphics
-    image(pgr, 0, 0, width, height); // Fit to the window
+    // Sends at the size of the graphics
+    spout.sendTexture(pgr);
+    image(pgr, 0, 0, width, height);
     */
     
     /*
     // OPTION 3: SEND THE TEXTURE OF AN IMAGE
-    spout.sendTexture(img); // Sends at the size of the image
-    image(img, 0, 0, width, height); // Fit to the window
+    // Sends at the size of the image
+    spout.sendTexture(img);
+    image(img, 0, 0, width, height);
     */
     
 }
