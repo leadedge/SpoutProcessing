@@ -20,7 +20,7 @@ package spout;
 //				 - Added "updateSender" to JNISpout.java and the JNI dll
 //				 - Introduced createSenderName using the sketch folder name as default
 //		06.03.16 - Introduced object pointers for multiple senders / receivers
-//		17.03.16 - fixed release of receiver when the received sender closed
+//		17.03.16 - Fixed release of receiver when the received sender closed
 //		18.03.16 - fixed initial detection of named sender for CreateReceiver
 //
 // ========================================================================================================
