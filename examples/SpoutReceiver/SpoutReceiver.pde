@@ -37,13 +37,9 @@ void setup() {
   
   // OPTION : CREATE A NAMED SPOUT RECEIVER
   //
-  // By default the active sender will be detected
-  // when receiveTexture is called.
-  //
-  // But you can specify the name of the sender
-  // to connect to. That sender must be running
-  // when the sketch starts.
-  //
+  // By default, the active sender will be detected
+  // when receiveTexture is called. But you can specify
+  // the name of the sender to initially connect to.
   // spout.createReceiver("Spout DX11 Sender");
  
 } 

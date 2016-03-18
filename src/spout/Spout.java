@@ -20,6 +20,8 @@ package spout;
 //				 - Added "updateSender" to JNISpout.java and the JNI dll
 //				 - Introduced createSenderName using the sketch folder name as default
 //		06.03.16 - Introduced object pointers for multiple senders / receivers
+//		17.03.16 - fixed release of receiver when the received sender closed
+//		18.03.16 - fixed initial detection of named sender for CreateReceiver
 //
 // ========================================================================================================
 
@@ -61,9 +63,7 @@ public class Spout {
 	 * @param parent
 	 */
 	public Spout (PApplet parent) {
-		
-		// infoBox("Spout init");
-		
+	
 		// A pointer to the new spout object for this instance
 		spoutPtr = JNISpout.init();
 		
@@ -85,8 +85,7 @@ public class Spout {
 	}  
 	
 	/**
-	  * This method should be called automatically 
-	  * when the sketch is disposed.
+	  * This method should be called automatically when the sketch is disposed.
 	  * Differences observed between 3.0.1, which does call it
 	  * for window close or esc but not for the "Stop" button,
 	  * and 3.0.2 which does not call it at all. Senders are
@@ -380,7 +379,6 @@ public class Spout {
 	 * @return true if the controller was found and opened
 	 */
 	public boolean openController() {
-		// System.out.println("openController [" + parent.sketchPath() + "]");
 		return(JNISpout.openController(parent.sketchPath(), spoutPtr));
 	}
 	
@@ -481,17 +479,22 @@ public class Spout {
 		String newname;
 
 		if(name.isEmpty() || name.equals("") ) {
-			name = senderName;
+			name = senderName; // existing name if any
+		}
+		else {
+			senderName = name; // name has been specified
 		}
 
 		if(JNISpout.createReceiver(name, dim, spoutPtr)) {
+			
 			// Initialization succeeded and there was a sender running
 			newname = JNISpout.getSpoutSenderName(spoutPtr);
+
 			// dim will be returned with the size of the sender it connected to
-			if(newname != null && newname.length() > 0 && !newname.equals(senderName)) {
+			if(newname != null && newname.length() > 0) {
 				bReceiverInitialized = true;
-				spoutReport(bReceiverInitialized);
 				senderName = newname;
+				spoutReport(bReceiverInitialized);
 				System.out.println("Found sender : '" + senderName + "' (" + dim[0] + "x" + dim[1] + ")" );
 			}
 		}
@@ -543,10 +546,15 @@ public class Spout {
 			// Sender dimensions (dim) are sent as well as returned
 			// The graphics size is adjusted next time round
 			Texture tex = pgl.getTexture(pgs);
-			if(JNISpout.receiveTexture(dim, tex.glName, tex.glTarget, bInvert, spoutPtr))
+			if(JNISpout.receiveTexture(dim, tex.glName, tex.glTarget, bInvert, spoutPtr)) {
 				parent.image(pgs, 0, 0, parent.width, parent.height);
-			else
+			}
+			else {
+				JNISpout.releaseReceiver(spoutPtr);
+				senderName = "";
+				bReceiverInitialized = false;
 				return false;
+			}
 		}
 		return true;
 
@@ -574,16 +582,18 @@ public class Spout {
 
 		// Adjust the graphics to the current sender size
 		if(dim[0] != pg.width || dim[1] != pg.height && dim[0] > 0 && dim[1] > 0) {
-			// System.out.println("Adjusting size from " + pg.width + "x" + pg.height + " to " + dim[0] + "x" + dim[1] );
 			pg = parent.createGraphics(dim[0], dim[1], PConstants.P2D);
 		}
 		else {
-			// System.out.println("Size matches : " + pg.width + "x" + pg.height + " to " + dim[0] + "x" + dim[1] );
 			// Sender dimensions (dim) are sent as well as returned
 			// The graphics size is adjusted next time round
 			Texture tex = pgl.getTexture(pg);
-			// System.out.println("Calling receivetexture" );
-			JNISpout.receiveTexture(dim, tex.glName, tex.glTarget, bInvert, spoutPtr);
+			if(!JNISpout.receiveTexture(dim, tex.glName, tex.glTarget, bInvert, spoutPtr)) {
+				JNISpout.releaseReceiver(spoutPtr);
+				senderName = "";
+				pg.updatePixels();
+				bReceiverInitialized = false;
+			}
 		}
 
 		return pg;    
@@ -611,7 +621,12 @@ public class Spout {
 		}
 		else {
 			Texture tex = pgl.getTexture(img);
-			JNISpout.receiveTexture(dim, tex.glName, tex.glTarget, bInvert, spoutPtr);
+			if(!JNISpout.receiveTexture(dim, tex.glName, tex.glTarget, bInvert, spoutPtr)) {
+				JNISpout.releaseReceiver(spoutPtr);
+				senderName = "";
+				img.updatePixels();
+				bReceiverInitialized = false;
+			}
 		}    
 
 		return img;

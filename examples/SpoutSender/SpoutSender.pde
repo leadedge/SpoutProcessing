@@ -5,7 +5,8 @@
 //
 //           spout.zeal.co
 //
-//      Based on a Processing example sketch by by Dave Bollinger
+//      Based on a Processing example
+//      sketch by by Dave Bollinger
 //      http://processing.org/examples/texturecube.html
 //
 
@@ -53,6 +54,7 @@ void draw()  {
     noStroke();
     
     // OPTION 1: SEND THE TEXTURE OF THE DRAWING SURFACE
+    // Sends at the size of the window    
     pushMatrix();
     translate(width/2.0, height/2.0, -100);
     rotateX(frameCount * 0.01);
@@ -60,12 +62,11 @@ void draw()  {
     scale(110);
     TexturedCube(img);
     popMatrix();
-    
-    // Sends at the size of the window    
     spout.sendTexture();
     
     /*
     // OPTION 2: SEND THE TEXTURE OF GRAPHICS
+    // Sends at the size of the graphics
     pgr.beginDraw();
     pgr.lights();
     pgr.background(0, 90, 100);
@@ -78,7 +79,6 @@ void draw()  {
     pgr.box(pgr.width/4); // box is not textured
     popMatrix();
     pgr.endDraw();
-    // Sends at the size of the graphics
     spout.sendTexture(pgr);
     image(pgr, 0, 0, width, height);
     */
