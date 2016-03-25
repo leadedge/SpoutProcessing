@@ -22,6 +22,7 @@ package spout;
 //		06.03.16 - Introduced object pointers for multiple senders / receivers
 //		17.03.16 - Fixed release of receiver when the received sender closed
 //		18.03.16 - Fixed initial detection of named sender for CreateReceiver
+//		25.03.16 - Removed "Settings" from multiple examples to work with Processing 2.2.1
 //
 // ========================================================================================================
 

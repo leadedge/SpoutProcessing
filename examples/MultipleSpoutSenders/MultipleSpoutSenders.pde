@@ -18,12 +18,9 @@ PGraphics[] canvas;
 Spout[] senders;
 color[] colors;
 
-void settings() {
-  size(640, 360, P3D);
-  PJOGL.profile = 1;
-}
 
 void setup() {
+  size(640, 360, P3D);
   canvas = new PGraphics[nSenders];
   for (int i = 0; i < nSenders; i++) {
     canvas[i] = createGraphics(320, 180, P3D);

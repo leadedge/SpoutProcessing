@@ -17,12 +17,9 @@ int nReceivers = 4;
 PGraphics[] canvas;
 Spout[] receivers;
 
-void settings() {
-  size(640, 360, P3D);
-  PJOGL.profile = 1;
-}
 
 void setup() {
+  size(640, 360, P3D);
   canvas = new PGraphics[nReceivers];
   for (int i = 0; i < nReceivers; i++) {
     canvas[i] = createGraphics(320, 180, P2D);
