@@ -10,7 +10,7 @@ public class JNISpout {
 
 	// Java instead of operating system
 	String sunDataModel = System.getProperty("sun.arch.data.model");
-	System.out.println("Spout " + sunDataModel +"bit v2.0.5.3 - Java " + jvm_version);
+	System.out.println("Spout " + sunDataModel +"bit v2.0.5.4 - Java " + jvm_version);
 	// System.out.println("Java " + sunDataModel + "bit " + jvm_version);
 	if(sunDataModel.equals("32"))	
 		System.loadLibrary("JNISpout_32");
@@ -70,7 +70,7 @@ public class JNISpout {
   
   protected static native boolean releaseReceiver(long ptr);
 
-  protected static native boolean receiveImage(int[] dim, int[] pix, long ptr);
+  protected static native boolean receivePixels(int[] dim, int[] pix, long ptr);
 
   protected static native boolean receiveTexture(int[] dim, int texID, int texTarget, boolean bInvert, long ptr);
 

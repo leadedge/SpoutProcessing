@@ -1,4 +1,4 @@
-//
+ //
 //             SpoutReceiver
 //
 //       Receive from a Spout sender
@@ -53,18 +53,23 @@ void draw() {
     //
     
     // OPTION 1: Receive and draw the texture
-    spout.receiveTexture();
+    // spout.receiveTexture();
 
-    // OPTION 2: Receive into PGraphics
+    // OPTION 2: Receive into PGraphics texture
     // pgr = spout.receiveTexture(pgr);
     // image(pgr, 0, 0, width, height);
 
-    // OPTION 3: Receive into PImage
+    // OPTION 3: Receive into PImage texture
     // img = spout.receiveTexture(img);
     // image(img, 0, 0, width, height);
     
+    // OPTION 4: Receive into PImage pixels
+    img = spout.receivePixels(img);
+    image(img, 0, 0, width, height);
+
     // Optionally resize the window to match the sender
     // spout.resizeFrame();
+    
 }
 
 

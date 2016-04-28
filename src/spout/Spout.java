@@ -23,6 +23,8 @@ package spout;
 //		17.03.16 - Fixed release of receiver when the received sender closed
 //		18.03.16 - Fixed initial detection of named sender for CreateReceiver
 //		25.03.16 - Removed "Settings" from multiple examples to work with Processing 2.2.1
+//		30.03.16 - Rebuild for Spout 2.005 release - version 2.0.5.3
+//		28.04.16 - Added "receivePixels"
 //
 // ========================================================================================================
 
@@ -86,6 +88,14 @@ public class Spout {
 	}  
 	
 	/**
+	 * Can be called from the sketch to release the library resources.
+	 * Such as from an over-ride of "exit" in the sketch for Processing 3.0.2
+	 */
+	public void release() {
+		 dispose();
+	}
+	 
+	/**
 	  * This method should be called automatically when the sketch is disposed.
 	  * Differences observed between 3.0.1, which does call it
 	  * for window close or esc but not for the "Stop" button,
@@ -107,6 +117,7 @@ public class Spout {
 	 * Never seems to be called.
 	 */
 	protected void finalize() throws Throwable {
+		infoBox("Spout finalize");
 		try {
 			if(bSenderInitialized) JNISpout.releaseSender(spoutPtr);
 			if(bReceiverInitialized) JNISpout.releaseReceiver(spoutPtr);
@@ -601,7 +612,7 @@ public class Spout {
 	}
 
 	/**
-	 * Receive into an image.
+	 * Receive into an image texture.
 	 * 
 	 * @param img - the image to be used and returned
 	 * @return true if a texture was returned
@@ -633,6 +644,40 @@ public class Spout {
 		return img;
 	}
 
+	
+	/**
+	 * Receive into image pixels.
+	 * 
+	 * @param img - the image to be used and returned
+	 * @return true if pixels were returned
+	 */
+	public PImage receivePixels(PImage img) {
+
+		// If no sender, keep looking
+		if(!bReceiverInitialized) {
+			createReceiver("");
+			return img;
+		}
+
+		boolean bInvert = false; // default for this function
+		if(invertMode >= 0) bInvert = (invertMode == 1);
+
+		if(dim[0] != img.width || dim[1] != img.height && dim[0] > 0 && dim[1] > 0) {
+			img.resize(dim[0], dim[1]);
+		}
+		else {
+			img.loadPixels();
+			if(!JNISpout.receivePixels(dim, img.pixels, spoutPtr)) {
+				JNISpout.releaseReceiver(spoutPtr);
+				senderName = "";
+				bReceiverInitialized = false;
+			}
+		    img.updatePixels();
+		}
+
+		return img;
+	}
+	
 	/**
 	 * Pop up SpoutPanel to select a sender.
 	 * 
