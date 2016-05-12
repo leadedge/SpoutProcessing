@@ -5,8 +5,10 @@
 //
 //           spout.zeal.co
 //
-//      Based on a Processing example
-//      sketch by by Dave Bollinger
+//       http://spout.zeal.co/download-spout/
+//
+//
+//      Rotating cube by Dave Bollinger
 //      http://processing.org/examples/texturecube.html
 //
 

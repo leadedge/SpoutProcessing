@@ -5,6 +5,8 @@
 //
 //             spout.zeal.co
 //
+//       http://spout.zeal.co/download-spout/
+//
 
 // IMPORT THE SPOUT LIBRARY
 import spout.*;
@@ -53,7 +55,7 @@ void draw() {
     //
     
     // OPTION 1: Receive and draw the texture
-    // spout.receiveTexture();
+    spout.receiveTexture();
 
     // OPTION 2: Receive into PGraphics texture
     // pgr = spout.receiveTexture(pgr);
@@ -64,8 +66,8 @@ void draw() {
     // image(img, 0, 0, width, height);
     
     // OPTION 4: Receive into PImage pixels
-    img = spout.receivePixels(img);
-    image(img, 0, 0, width, height);
+    // img = spout.receivePixels(img);
+    // image(img, 0, 0, width, height);
 
     // Optionally resize the window to match the sender
     // spout.resizeFrame();
@@ -73,9 +75,9 @@ void draw() {
 }
 
 
-// RH click to select a sender
+// SELECT A SPOUT SENDER
 void mousePressed() {
-  // SELECT A SPOUT SENDER
+  // RH click to select a sender
   if (mouseButton == RIGHT) {
     // Bring up a dialog to select a sender.
     // Spout installation required

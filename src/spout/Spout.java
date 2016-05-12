@@ -25,6 +25,8 @@ package spout;
 //		25.03.16 - Removed "Settings" from multiple examples to work with Processing 2.2.1
 //		30.03.16 - Rebuild for Spout 2.005 release - version 2.0.5.3
 //		28.04.16 - Added "receivePixels"
+//		10.05.16 - Added SpoutControls example
+//		12.05.16 - Library release - version 2.0.5.4
 //
 // ========================================================================================================
 
@@ -387,6 +389,7 @@ public class Spout {
 	 * Open the SpoutController executable to allow controls to be changed.
 	 * 
 	 * Requires SpoutControls installation
+	 * or SpoutController.exe in the sketch path
 	 * 
 	 * @return true if the controller was found and opened
 	 */
@@ -723,11 +726,6 @@ public class Spout {
 			invertMode = 0;
 	}
 
-
-	// =========================================== //
-	//                 LOCAL FUNCTIONS             //
-	// =========================================== //
-
 	/**
 	 * Print current settings to the console.
 	 * 
@@ -748,6 +746,11 @@ public class Spout {
 		}
 	}
 	
+	/**
+	 * Pop up a MessageBox dialog
+	 * 
+	 * @param infoMessage - the message to show
+	 */
 	public void infoBox(String infoMessage)
     {
         JOptionPane.showMessageDialog(null, infoMessage, "Spout", JOptionPane.INFORMATION_MESSAGE);
