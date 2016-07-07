@@ -27,6 +27,9 @@ package spout;
 //		28.04.16 - Added "receivePixels"
 //		10.05.16 - Added SpoutControls example
 //		12.05.16 - Library release - version 2.0.5.4
+//		02.06.16 - Library release - version 2.0.5.5 for Spout 2.005 June 2016
+//		07.07.16 - Updated for latest SDK functions
+//				   co.zeal.spout project removed
 //
 // ========================================================================================================
 
