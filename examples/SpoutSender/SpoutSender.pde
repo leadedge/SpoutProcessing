@@ -39,14 +39,12 @@ void setup() {
   // CREATE A NEW SPOUT OBJECT
   spout = new Spout(this);
   
-  // OPTION : CREATE A NAMED SENDER
-  //
-  // By default, a sender is created
-  // the first time "sendTexture" is called
-  // and the sketch folder name is used.
-  // But a sender can be created now with any name.
-  //
-  // spout.createSender("Spout Processing");
+  // CREATE A NAMED SENDER
+  // A sender can be created now with any name.
+  // Otherwise a sender is created the first time
+  // "sendTexture" is called and the sketch
+  // folder name is used.  
+  spout.createSender("Spout Processing");
   
 } 
 
@@ -55,8 +53,7 @@ void draw()  {
     background(0, 90, 100);
     noStroke();
     
-    // OPTION 1: SEND THE TEXTURE OF THE DRAWING SURFACE
-    // Sends at the size of the window    
+    // Draw the graphics   
     pushMatrix();
     translate(width/2.0, height/2.0, -100);
     rotateX(frameCount * 0.01);
@@ -64,6 +61,9 @@ void draw()  {
     scale(110);
     TexturedCube(img);
     popMatrix();
+    
+    // OPTION 1: SEND THE TEXTURE OF THE DRAWING SURFACE
+    // Sends at the size of the window    
     spout.sendTexture();
     
     /*

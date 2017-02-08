@@ -30,6 +30,17 @@ package spout;
 //		02.06.16 - Library release - version 2.0.5.5 for Spout 2.005 June 2016
 //		07.07.16 - Updated for latest SDK functions
 //				   co.zeal.spout project removed
+//		09.10.16 - Introduced cleanup function for dispose
+//				   https://github.com/processing/processing/issues/4381#issuecomment-252198109
+//		15.01.17 - Change to Processing 3.2.3 core library.
+//				   Added getShareMode - 0 Texture, 1 CPU, 2 Memory
+//		26.01.17 - Rebuild for Spout 2.006 - version 2.0.6.0
+//		27.01.17 - Some comment changes for CreateSender.
+//				 - JNISpout - changes to OpenSpoutController to find a SpoutControls installation
+//		08.02.17 - Change to Processing 3.2.4 core library.
+//				 - SpoutControls example removed - duplicate of SpoutBox in the SpoutControls installation
+//				 - Rebuild with current SDK files
+//				 - Library release - version 2.0.6.0 for Spout 2.006 - February 2017
 //
 // ========================================================================================================
 
@@ -97,24 +108,21 @@ public class Spout {
 	 * Such as from an over-ride of "exit" in the sketch for Processing 3.0.2
 	 */
 	public void release() {
+		 // infoBox("Spout release");
 		 dispose();
 	}
-	 
+		
 	/**
 	  * This method should be called automatically when the sketch is disposed.
-	  * Differences observed between 3.0.1, which does call it
-	  * for window close or esc but not for the "Stop" button,
-	  * and 3.0.2 which does not call it at all. Senders are
-	  * apparently released because they can't be detected subsequently.  
+	  * Differences observed between Processing versions :
+	  * 3.0.1 calls it for [X] window close or esc but not for the "Stop" button,
+	  * 3.0.2 does not call it at all.
+	  * 3.2.3 calls it for esc of [X] but not for the stop button.
+	  * Senders are apparently released because they can't be detected subsequently.  
 	  */
 	 public void dispose() {
 		// infoBox("Spout dispose");
-	 	if(bSenderInitialized) JNISpout.releaseSender(spoutPtr);
-		if(bReceiverInitialized) JNISpout.releaseReceiver(spoutPtr);
-		if(spoutPtr > 0) JNISpout.deInit(spoutPtr);
-		bSenderInitialized = false;
-		bReceiverInitialized = false;
-		spoutPtr = 0;
+		spoutCleanup();
 	}
 
 	/**
@@ -122,14 +130,9 @@ public class Spout {
 	 * Never seems to be called.
 	 */
 	protected void finalize() throws Throwable {
-		infoBox("Spout finalize");
+		// infoBox("Spout finalize");
 		try {
-			if(bSenderInitialized) JNISpout.releaseSender(spoutPtr);
-			if(bReceiverInitialized) JNISpout.releaseReceiver(spoutPtr);
-			if(spoutPtr > 0) JNISpout.deInit(spoutPtr);
-			bSenderInitialized = false;
-			bReceiverInitialized = false;
-			spoutPtr = 0;
+			spoutCleanup();
 	    } finally {
 	    	super.finalize();
 	    }
@@ -173,9 +176,10 @@ public class Spout {
 	 * Initialize a sender.
 	 * 
 	 * The name provided is registered in the list of senders
-	 * Texture share initialization only succeeds if
-	 * the graphic hardware is compatible, otherwise
-	 * it defaults to memoryshare mode
+	 * Initialization is made using or whatever the user has selected
+	 * with SpoutDXmode : Texture, CPU or Memory. Texture share only 
+	 * succeeds if the graphic hardware is compatible, otherwise it
+	 * defaults to CPU texture share mode.
 	 *  
 	 * @param name - sender name (up to 256 characters)
 	 * @param Width - sender width
@@ -188,8 +192,8 @@ public class Spout {
 			bSenderInitialized = true;
 			dim[0] = Width;
 			dim[1] = Height;
+			System.out.println("Created sender '" + senderName + "' (" + dim[0] + "x" + dim[1] + ")");
 			spoutReport(bSenderInitialized); // console report
-			System.out.println("Created sender '" + senderName + "'");
 		}
 		return bSenderInitialized;
 	}
@@ -232,6 +236,7 @@ public class Spout {
 
 		if(!bSenderInitialized)	{
 			// Create a sender the dimensions of the sketch window
+			System.out.println("sendTexture");
 			createSender(senderName, parent.width, parent.height);
 			return;
 		}
@@ -272,7 +277,7 @@ public class Spout {
 			// Create a sender the dimensions of the graphics object
 			dim[0] = pgr.width;
 			dim[1] = pgr.height;
-			System.out.println("sendTexture - created sender '" + senderName + "' (" + dim[0] + "x" + dim[1] + ")");
+			System.out.println("sendTexture graphics");
 			createSender(senderName, dim[0], dim[1]);
 			return;
 		}
@@ -298,6 +303,7 @@ public class Spout {
 	{
 		if(!bSenderInitialized)	{
 			// Create a sender the dimensions of the image object
+			System.out.println("sendTexture image");
 			createSender(senderName, img.width, img.height);
 			return;
 		}
@@ -711,6 +717,20 @@ public class Spout {
 	}
 
 	
+	/**
+	 * Release everything
+	 */
+	public void spoutCleanup()
+	{
+		// infoBox("spoutCleanup");
+		if(bSenderInitialized) JNISpout.releaseSender(spoutPtr);
+		if(bReceiverInitialized) JNISpout.releaseReceiver(spoutPtr);
+		if(spoutPtr > 0) JNISpout.deInit(spoutPtr);
+		bSenderInitialized = false;
+		bReceiverInitialized = false;
+		spoutPtr = 0;
+    }
+	
 	// =========================================== //
 	//                   UTILITY                   //
 	// =========================================== //
@@ -736,11 +756,13 @@ public class Spout {
 	 */
 	public void spoutReport(boolean bInit)
 	{
-		boolean bMemoryMode;
+		int ShareMode = 0; // Texture share default
 		if(bInit) {
-			bMemoryMode = JNISpout.getMemoryShareMode(spoutPtr);
-			if(bMemoryMode)
+			ShareMode = JNISpout.getShareMode(spoutPtr);
+			if(ShareMode == 2)
 				System.out.println("Spout initialized memory sharing");
+			else if(ShareMode == 1)
+				System.out.println("Spout initialized CPU texture sharing");
 			else
 				System.out.println("Spout initialized texture sharing");
 		}

@@ -1,4 +1,4 @@
- //
+//
 //             SpoutReceiver
 //
 //       Receive from a Spout sender
