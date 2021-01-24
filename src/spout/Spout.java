@@ -16,7 +16,7 @@ package spout;
 //		15.02.16 - Removed "createSender" function console output
 //		26.02.16 - Updated JNISpout library dll files - tested Processing 3.0.2 64bit and 32bit 
 //				   Spout 2.005 SDK as at 26.02.16 - incremented library version number to 2.0.5.2
-//		01.03.16 - Separated initialization flag to bSenderInitialized and bReceiverInitialized
+//		01.03.16 - Separated initialization flag to bSenderInitialized and bReceiverConnected
 //				 - Added "updateSender" to JNISpout.java and the JNI dll
 //				 - Introduced createSenderName using the sketch folder name as default
 //		06.03.16 - Introduced object pointers for multiple senders / receivers
@@ -41,14 +41,62 @@ package spout;
 //				 - SpoutControls example removed - duplicate of SpoutBox in the SpoutControls installation
 //				 - Rebuild with current SDK files
 //				 - Library release - version 2.0.6.0 for Spout 2.006 - February 2017
+//		10.02.12 - Changed Build properties to java.target.version=1.8
+//		16.06.17 - Added getSenderName, getSenderWidth, getSenderHeight
+//				 - Update JNISpout
+//		18.06.17 - Change to Processing 3.2.4 core library
+//				 - Update Version to 2.0.7.0 for Spout 2.007
+//		27.06.17 - Change to Processing 3.2.5 core library
+//		17.11.18 - Updates for Spout 2.007
+//				   New frame option for all SDK sending and receiving functions
+//				   Add getSenderFps, getSenderFrame
+//				   Change application CreateReceiver with name option to setupReceiver
+//				   Change receiveTexture() to void, always draw graphics
+//				   Change to Processing 3.4 core library
+//		18.11.18 - Change return types for receive functions
+//				   Simplified functions with object arguments passed by reference
+//				   https://processing.org/tutorials/objects/
+//				   Add receiveGraphics and receiveImage
+//				   Allocate local graphics object in constructor
+//		03.01.19 - Revise examples
+//		26.01.19 - Change to Processing 3.5.2 core library
+//				   Add logging functions
+//				   Update JNISpout libraries
+//		27.01.19 - Set InfoBox message dialog topmost so it does not get lost
+//		25.04.19 - Add pgr.loadPixels() before getTexture in ReceiveTexture
+//				   To avoid "pixels array is null" error the first time it is accessed
+//				   Minor changes to code layout in createReceiver
+//		20.05.19 - Change setupReceiver to setReceiverName
+//				   Change receiveTexture from void to boolean. Updated receiver examples.
+//				   Add if(pgs.loaded to drawTexture
+//		04.06.19   Rebuild with 2.007 SDK and JNISpout library
+//		06.06.19   Rebuild for 256 max senders for 2.007
+//		10.06.19   Changed Eclipse compiler compliance to Java 1.8
+//		13.10.19   Rebuild for revised Spout SDK
+//		27.11.19   Rebuild for revised Spout SDK
+//		22.01.20   Update to Processing 3.5.4 core
+//				   Removed setupSender function - createSender still used 
+//		13.02.20   Add setAdapter
+//				   Rebuild for revised 2.007 Spout SDK and JNISpout library
+//		16.04.20   spoutCleanup : use closeSender or closeReceiver instead of release functions directly
+//		19.06.20   Rebuild for GitHub update (Processing 3.5.4)
+//		24.12.20   Update for SpoutGL changes
+//				   Add setReceiverName to JNISpout
+//				   Add setSenderName
+//				   TODO : sender graphics resize
+//				   Rebuild for revised 2.007 SpoutGL and updated JNISpout library (Processing 3.5.4)
+//		24.01.21   Rebuild for 2.007 release Version 2.0.7.1
 //
 // ========================================================================================================
+
 
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 import processing.core.PImage;
 import processing.opengl.*;
+
+import javax.swing.JFrame;
 import javax.swing.JOptionPane; // for infoBox
 
 /**
@@ -60,17 +108,18 @@ import javax.swing.JOptionPane; // for infoBox
 public class Spout {
 	
 	// A pointer to the spout object created
-	long spoutPtr = 0;
-
+	long spoutPtr;
 	PApplet parent;
 	PGraphicsOpenGL pgl;
 	PGraphics pgs; // local graphics object for receiving textures
 	String senderName; // the sender name
+	String userSenderName; // user specified sender name for CreateReceiver
 	int[] dim = new int[2]; // Sender dimensions
 	boolean bSenderInitialized; // sender initialization flag
-	boolean bReceiverInitialized; // receiver initialization flag
+	boolean bReceiverConnected; // receiver initialization flag
+	boolean bPixelsLoaded;
+	int receiverType; // 0 - parent, 1 - graphics, 2 - image
 	int invertMode; // User setting for texture invert
-
 	
 	/**
 	 * Create a Spout Object.
@@ -79,13 +128,13 @@ public class Spout {
 	 * and a pointer to it saved in this class for
 	 * use with all functions.
 	 * 
-	 * @param parent
+	 * @param parent : parent sketch
 	 */
 	public Spout (PApplet parent) {
 	
 		// A pointer to the new spout object for this instance
 		spoutPtr = JNISpout.init();
-		
+
 		if(spoutPtr == 0) 
 			PGraphics.showWarning("Spout initialization failed");
 
@@ -95,9 +144,14 @@ public class Spout {
 		dim[0] = 0; // Sender width
 		dim[1] = 0; // Sender height
 		bSenderInitialized = false;
-		bReceiverInitialized = false;
+		bReceiverConnected = false;
+		bPixelsLoaded = false;
 		senderName = "";
+		userSenderName = "";
+		receiverType = 0; // receive to parent graphics
 		invertMode = -1; // User has not set any mode - use function defaults
+		// Initialize a local graphics object in advance for receiveTexture
+		pgs = parent.createGraphics(parent.width, parent.height, PConstants.P2D);
 		
 		parent.registerMethod("dispose", this);
 		
@@ -117,7 +171,9 @@ public class Spout {
 	  * Differences observed between Processing versions :
 	  * 3.0.1 calls it for [X] window close or esc but not for the "Stop" button,
 	  * 3.0.2 does not call it at all.
-	  * 3.2.3 calls it for esc of [X] but not for the stop button.
+	  * 3.2.3 calls it for esc or [X] but not for the stop button.
+	  * 3.5.2 calls it for esc or [X] but not for the stop button.
+	  * 3.5.4 calls it for esc or [X] but not for the stop button.
 	  * Senders are apparently released because they can't be detected subsequently.  
 	  */
 	 public void dispose() {
@@ -142,14 +198,14 @@ public class Spout {
 	// =========================================== //
 	//                   SENDER                    //
 	// =========================================== //
+	
 	/**
 	 * Initialize a sender name.
 	 * If the name is not specified, the sketch folder name is used.
 	 * 
-	 * @param name - sender name (up to 256 characters)
+	 * @param name : sender name
 	 */
-	public void createSenderName(String name) {
-		 
+	public void setSenderName(String name) {
 		if(name.isEmpty() || name.equals("") ) {
 			String path = parent.sketchPath();
 			int index = path.lastIndexOf("\\");
@@ -159,16 +215,16 @@ public class Spout {
 			senderName = name;
 		}
 	}
-		
+	
 	/**
 	 * Initialize a sender with the sketch window dimensions.
 	 * If the sender name is not specified, the sketch folder name is used.
 	 * 
-	 * @param name - sender name (up to 256 characters)
+	 * @param name : sender name (up to 256 characters)
 	 * @return true if the sender was created
 	 */	
 	public boolean createSender(String name) {
-		createSenderName(name);
+		setSenderName(name);
 		return createSender(name, parent.width, parent.height);
 	}	
 		
@@ -181,13 +237,13 @@ public class Spout {
 	 * succeeds if the graphic hardware is compatible, otherwise it
 	 * defaults to CPU texture share mode.
 	 *  
-	 * @param name - sender name (up to 256 characters)
-	 * @param Width - sender width
-	 * @param Height - sender height
+	 * @param name : sender name (up to 256 characters)
+	 * @param Width : sender width
+	 * @param Height : sender height
 	 * @return true if the sender was created
 	 */
 	public boolean createSender(String name, int Width, int Height) {
-		createSenderName(name);
+		setSenderName(name);
 		if(JNISpout.createSender(senderName, Width, Height, spoutPtr)) {
 			bSenderInitialized = true;
 			dim[0] = Width;
@@ -201,10 +257,11 @@ public class Spout {
 	/**
 	 * Update the size of the current sender
 	 * 
-	 * @param Width - new width
-	 * @param Height - new height
+	 * @param Width : new width
+	 * @param Height : new height
 	 */
 	public void updateSender(int Width, int Height) {
+		
 		if(bSenderInitialized) { // There is a sender name
 			JNISpout.updateSender(senderName, Width, Height, spoutPtr);
 			dim[0] = Width;
@@ -215,13 +272,13 @@ public class Spout {
 	/**
 	 * Close the sender. 
 	 * 
-	 * This releases the sender name from the list if senders
+	 * This releases the sender name from the list of senders
 	 * and releases all resources for the sender.
 	 */
 	public void closeSender() {
 		if(bSenderInitialized) {
 			if(JNISpout.releaseSender(spoutPtr))
-				System.out.println("Sender was closed");
+				System.out.println("Sender closed");
 			else
 				System.out.println("No sender to close");
 			bSenderInitialized = false;
@@ -236,7 +293,6 @@ public class Spout {
 
 		if(!bSenderInitialized)	{
 			// Create a sender the dimensions of the sketch window
-			System.out.println("sendTexture");
 			createSender(senderName, parent.width, parent.height);
 			return;
 		}
@@ -269,7 +325,7 @@ public class Spout {
 	/**
 	 * Write the texture of a graphics object.
 	 * 
-	 * @param pgr - the graphics object to be used.
+	 * @param pgr : the graphics object to be used.
 	 */
 	public void sendTexture(PGraphics pgr)
 	{
@@ -277,7 +333,6 @@ public class Spout {
 			// Create a sender the dimensions of the graphics object
 			dim[0] = pgr.width;
 			dim[1] = pgr.height;
-			System.out.println("sendTexture graphics");
 			createSender(senderName, dim[0], dim[1]);
 			return;
 		}
@@ -297,13 +352,12 @@ public class Spout {
 	/**
 	 *  Write the texture of an image object.
 	 *  
-	 * @param img - the image to be used.
+	 * @param img : the image to be used.
 	 */
 	public void sendTexture(PImage img)
 	{
 		if(!bSenderInitialized)	{
 			// Create a sender the dimensions of the image object
-			System.out.println("sendTexture image");
 			createSender(senderName, img.width, img.height);
 			return;
 		}
@@ -320,12 +374,474 @@ public class Spout {
 
 	}
 
-	// ================= SPOUTCONTROLS =================
+	
+	// =========================================== //
+	//                   RECEIVER                  //
+	// =========================================== //
+	
+	/**
+	 * 	Set a sender name to receive from
+	 * 
+	 * @param name : sender name to be used
+	 */
+	 public void setReceiverName(String name) {
+		 userSenderName = name;
+		 JNISpout.setReceiverName(userSenderName, spoutPtr);
+	 }
+
+	/**
+	 * 	Create a Receiver. 
+	 * 
+	 * Create receiver using the system sender name
+	 * @return true if connection with a sender succeeded
+	 */
+	public boolean createReceiver() {
+		// Pass the user specified sender name
+		return createReceiver(userSenderName);
+	}
+	
+	/**
+	 *  Create a Receiver. 
+	 * 
+	 * If the named sender is not running or if the name is not specified,
+	 * the receiver will attempt to connect with the active sender.
+	 * If the sender is found, the name is returned and set.
+	 *  
+	 * @param name : sender name to be used
+	 * @return true if connection with a sender succeeded
+	 */
+	public boolean createReceiver(String name) {
+		
+		// Image size values passed in are modified and passed back
+		// as the size of the sender that the receiver connects to.
+		dim[0] = parent.width;
+		dim[1] = parent.height;
+		String newname;
+		
+		// Use the user specified sender name if any.
+		// If it is empty, the receiver will connect to the active sender 
+		if(name.isEmpty() || name.equals("") ) {
+			name = userSenderName;
+		}
+		
+		if(JNISpout.createReceiver(name, dim, spoutPtr)) {
+			// Initialization succeeded and there was a sender running
+			newname = getSenderName();
+			// dim will be returned with the size of the sender it connected to
+			if(newname != null && !newname.isEmpty() && newname.length() > 0) {
+				// Set the global sender name
+				senderName = newname;
+				dim[0] = JNISpout.getSenderWidth(spoutPtr);
+				dim[1] = JNISpout.getSenderHeight(spoutPtr);
+				bReceiverConnected = true;
+				spoutReport(true);
+				// Once connected, the user can select new senders
+				// and ReceiveTexture adapts to the change without
+				// needing to call createReceiver again
+				return true;
+				
+			}
+		}
+
+		bReceiverConnected = false;
+		return false;
+
+	} // end createReceiver
+	
+	/**
+	 * @return receiver status
+	 */
+	public boolean isReceiverConnected() {
+		return bReceiverConnected;
+	} 
+
+	/**
+	 * Close a receiver.
+	 * All resources of the receiver are released.
+	 */
+	public void closeReceiver() {
+		if(JNISpout.releaseReceiver(spoutPtr))
+			System.out.println("Receiver closed");
+		else
+			System.out.println("No receiver to close");
+		bReceiverConnected = false;
+	} 
+	
+	/**
+	 * Receive into local graphics
+	 * @return result
+	 */
+	public boolean receiveTexture()
+	{
+		if(isConnected()) {
+			pgs = receiveGraphics(pgs);
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Draw the local graphics
+	 */
+	public void drawTexture()
+	{
+		if(pgs.loaded && pgs.displayable())
+			parent.image(pgs, 0, 0, parent.width, parent.height);
+	}
+	
+	/**
+	 * Receive into graphics
+	 * 
+	 * @param pgr : the graphics to be used
+	 * @return changed graphics
+	 */
+	public PGraphics receiveTexture(PGraphics pgr)
+	{
+		return receiveGraphics(pgr);
+	}
+	
+	/**
+	 * Receive into an image
+	 * 
+	 * @param img : the image to be used
+	 * @return changed image
+	 */
+	public PImage receiveTexture(PImage img) {
+		return receiveImage(img);
+	}
+	
+	/**
+	 * Receive a local graphics texture
+	 */
+	public void receiveGraphics()
+	{
+		pgs = receiveGraphics(pgs);
+	}
+	
+	/**
+	 * Receive a graphics texture
+	 * 
+	 * @param pgr : the graphics to be used
+	 * @return changed graphics
+	 */
+	public PGraphics receiveGraphics(PGraphics pgr)
+	{	
+		
+		boolean bInvert = true; // default for this function
+		if(invertMode >= 0) bInvert = (invertMode == 1);
+		
+		// If not connected keep looking
+		if(!isConnected())
+			return pgr;
+		
+		if(pgr == null ) {
+			// Create a graphics object if the user has not done so
+			pgr = parent.createGraphics(parent.width, parent.height, PConstants.P2D);
+			// TODO : check initial pixel update
+		}
+		else if(dim[0] != pgr.width || dim[1] != pgr.height && dim[0] > 0 && dim[1] > 0) {
+			// Adjust the graphics to the current sender size
+			pgr = parent.createGraphics(dim[0], dim[1], PConstants.P2D);
+			pgr.loadPixels();
+		}		
+		else if(bReceiverConnected) {
+			// Receive a texture if connected
+			// Sender dimensions (dim) are sent as well as returned
+			// If the sender changes size, the graphics is adjusted next time round
+			if(!bPixelsLoaded) {
+				pgr.loadPixels();
+				bPixelsLoaded = true;
+			}
+			
+			Texture tex = pgl.getTexture(pgr);
+			if(!JNISpout.receiveTexture(dim, tex.glName, tex.glTarget, bInvert, spoutPtr)) {
+				JNISpout.releaseReceiver(spoutPtr);
+				pgr.updatePixels(); // Clear the graphics of the last frame
+				bReceiverConnected = false;
+			}
+			
+		}
+		
+		// created pgr must be returned for the new size
+		return pgr;
+	}
+	
+	/**
+	 * Receive an image texture
+	 * 
+	 * @param img : the image to be used
+	 * @return changed image
+	 */
+	public PImage receiveImage(PImage img) {
+		
+		// If not connected keep looking
+		if(!isConnected())
+			return img;
+		
+		if(img == null ) {
+			// Create an image object if the user has not done so
+			img = parent.createImage(parent.width, parent.height, PConstants.ARGB);
+		}
+		else if(dim[0] != img.width || dim[1] != img.height && dim[0] > 0 && dim[1] > 0) {
+			// Adjust the image to the current sender size
+			img = parent.createImage(dim[0], dim[1], PConstants.ARGB);
+		}		
+		else if(bReceiverConnected) {		
+			// Receive into local graphics first
+			pgs = receiveGraphics(pgs);
+			// Use the PGraphics texture as the cache object for the image
+			// Adapted from Syphon client code
+			// https://github.com/Syphon/Processing/blob/master/src/codeanticode/syphon/SyphonClient.java
+			Texture tex = pgl.getTexture(pgs);
+		    pgl.setCache(img, tex);			
+		}
+		// created img must be returned for the new size
+		return img;
+	}	
+	
+		
+	/**
+	 * Is the receiver connected to a sender?
+	 *
+	 * @return new frame status
+	 */
+	public boolean isConnected() {
+		if(!bReceiverConnected) {
+			// If no sender, keep looking
+			if(!createReceiver())
+				return false;
+		}
+		return true;
+	}	
+	
+	/**
+	 * Get the current sender name
+	 * Checks for sender existence 
+	 * 
+	 * @return sender name
+	 */
+	public String getSenderName()
+	{
+		return JNISpout.getSenderName(spoutPtr);
+	}
+	
+	/**
+	 * Get the current sender width
+	 * 
+	 * @return sender width
+	 */
+	public int getSenderWidth()
+	{
+		return dim[0];
+	}
+	
+	/**
+	 * Get the current sender height
+	 * 
+	 * @return sender height
+	 */
+	public int getSenderHeight()
+	{
+		return dim[1];
+	}
+
+	/**
+	 * Get the current sender frame rate
+	 * 
+	 * @return fps
+	 */
+	public int getSenderFps()
+	{
+		// Avoid integer truncation as far as possible
+		return Math.round(JNISpout.getSenderFps(spoutPtr)+0.5f);
+	}
+
+	/**
+	 * Get the current sender frame number
+	 * 
+	 * @return frame number
+	 */
+	public int getSenderFrame()
+	{
+		 return JNISpout.getSenderFrame(spoutPtr);
+	}
+	
+	/**
+	 * Is the received frame new
+	 * 
+	 * isFrameNew can be used after receiving a texture 
+	 * to return whether the received frame is new.
+	 * It is only necessary if there is a special application for it.
+	 *  
+	 * @return status
+	 */
+	public boolean isFrameNew()
+	{
+		 return JNISpout.isFrameNew(spoutPtr);
+	}
+
+	/**
+	 * Disable frame counting for this application
+	 * 
+	 */
+	public void disableFrameCount()
+	{
+		 JNISpout.disableFrameCount(spoutPtr);
+	}
+	
+	/**
+	 * Pop up SpoutPanel to select a sender.
+	 * 
+	 * If the user selected a different one, attach to it.
+	 * Requires Spout installation 2.004 or higher.
+	 */
+	public void selectSender()
+	{
+		JNISpout.senderDialog(spoutPtr);
+	}
+	
+	/*
+	 * Enable logging to default console output
+	 */
+	public void enableSpoutLog()
+	{
+		JNISpout.enableSpoutLog(spoutPtr);
+	}
+	
+	/*
+	 * Log to a file
+	 */
+	public void enableSpoutLogFile(String filename)
+	{
+		JNISpout.spoutLogToFile(filename, false, spoutPtr);
+	}
+	
+	/*
+	 * Append logs to a file
+	 */
+	public void enableSpoutLogFile(String filename, boolean append)
+	{
+		JNISpout.spoutLogToFile(filename, append, spoutPtr);
+	}	
+	
+	/*
+	 * Set the Spout log level
+	 * @param level
+	 * 0 - Disable : 1 - Verbose : 2 - Notice (default)
+	 * 3 - Warning : 4 - Error   : 5 - Fatal
+	 */
+	public void setLogLevel(int level)
+	{
+		JNISpout.spoutLogLevel(level, spoutPtr);
+	}
+	
+	/**
+	 * Log
+	 * @param text - log text
+	 *  
+	 */
+	public void spoutLog(String text)
+	{
+		JNISpout.spoutLog(text, spoutPtr);
+	}
+		
+	/**
+	 * Verbose log
+	 * @param text - log text
+	 *  
+	 */
+	public void spoutLogVerbose(String text)
+	{
+		JNISpout.spoutLogVerbose(text, spoutPtr);
+	}
+	
+	/**
+	 * Notice log
+	 * @param text - log text
+	 *  
+	 */
+	public void spoutLogNotice(String text)
+	{
+		JNISpout.spoutLogNotice(text, spoutPtr);
+	}
+	
+	/**
+	 * Warning log
+	 * @param text - log text
+	 *  
+	 */
+	public void spoutLogWarning(String text)
+	{
+		JNISpout.spoutLogWarning(text, spoutPtr);
+	}
+	
+	/**
+	 * Error log
+	 * @param text - log text
+	 *  
+	 */
+	public void spoutLogError(String text)
+	{
+		JNISpout.spoutLogError(text, spoutPtr);
+	}
+	
+	/**
+	 * Fatal log
+	 * @param text - log text
+	 *  
+	 */
+	public void spoutLogFatal(String text)
+	{
+		JNISpout.spoutLogFatal(text, spoutPtr);
+	}
+	
+	/**
+	 * Set the adapter for Spout output
+	 * @param index
+	 * @return
+	 */
+	public boolean setAdapter(int index)
+	{
+		return JNISpout.setAdapter(index, spoutPtr);
+	}
+	
+	/**
+	 * Resize the receiver drawing surface and sketch window to that of the sender
+	 * 
+	 * Requires Processing 3+
+	 */
+	public void resizeFrame()
+	{
+		if(!bReceiverConnected) return;
+		if(parent.width != dim[0] || parent.height != dim[1]  && dim[0] > 0 && dim[1] > 0) {
+			// Only for Processing 3
+			parent.getSurface().setSize(dim[0], dim[1]);
+		}
+	}
+
+	/**
+	 * Release everything
+	 */
+	public void spoutCleanup()
+	{
+		// infoBox("SpoutCleanup");
+		if(bSenderInitialized) closeSender();
+		if(bReceiverConnected) closeReceiver();
+		if(spoutPtr > 0) JNISpout.deInit(spoutPtr);
+		spoutPtr = 0;
+    }
+	
+	
+
+	// =========================================== //
+	//               SPOUTCONTROLS                 //
+	// =========================================== //
+	
 	/**
 	 * Create a control with defaults.
 	 * 
 	 * @param name - control name
-	 * @param type - text (string), bool (checkbox), event (button), float (value)
+	 * @param type - text (string), bool, event or float
 	 * @return true for success
 	 */
 	public boolean createSpoutControl(String name, String type) {
@@ -335,8 +851,9 @@ public class Spout {
 	/**
 	 * Create a control with default value.
 	 * 
-	 * @param name - control name
-	 * @param type - float, bool, event
+	 * @param name : control name
+	 * @param type : text, float, bool or event
+	 * @param value : default value
 	 * @return true for success
 	 */
 	public boolean createSpoutControl(String name, String type, float value) {
@@ -346,8 +863,9 @@ public class Spout {
 	/**
 	 * Create a text control with default string.
 	 * 
-	 * @param name - control name
-	 * @param type - text
+	 * @param name : control name
+	 * @param type : text
+	 * @param text : default text
 	 * @return true for success
 	 */	
 	public boolean createSpoutControl(String name, String type, String text) {
@@ -358,8 +876,11 @@ public class Spout {
 	 * Create a float control with defaults.
 	 * Minimum, Maximum, Default
 	 * 
-	 * @param name - control name
-	 * @param type - float
+	 * @param name : control name
+	 * @param type : float
+	 * @param minimum : minimum value
+	 * @param maximum : maximum value
+	 * @param value : default value
 	 * @return true for success
 	 */	
 	public boolean createSpoutControl(String name, String type, float minimum, float maximum, float value) {
@@ -372,7 +893,7 @@ public class Spout {
 	 * A sender creates the controls and then calls OpenControls with a control name
 	 * so that the controller can set up a memory map and share data with the sender
 	 * as it changes the controls.
-	 * @param name - control map name (the sender name)
+	 * @param name : control map name (the sender name)
 	 * @return true for success
 	 */
 	public boolean openSpoutControls(String name) {
@@ -384,10 +905,10 @@ public class Spout {
 	 * 
 	 * The value or text string are changed depending on the control type.
 	 * 
-	 * @param controlName
-	 * @param controlType
-	 * @param controlValue
-	 * @param controlText
+	 * @param controlName : name of control
+	 * @param controlType : type : text, float, bool, event 
+	 * @param controlValue : value
+	 * @param controlText : text
 	 * @return The number of controls. Zero if no change.
 	 */
 	public int checkSpoutControls(String[] controlName, int[] controlType, float[] controlValue, String[] controlText ) {
@@ -415,13 +936,16 @@ public class Spout {
 		return(JNISpout.closeControls(spoutPtr));
 	}
 
-	// ================= SHARED MEMORY =================
+	// =========================================== //
+	//               SHARED MEMORY                 //
+	// =========================================== //
+	
 	/**
 	 * Create a sender memory map.
 	 * 
-	 * @param name - sender name
-	 * @param Width - map width
-	 * @param Height - map height
+	 * @param name : sender name
+	 * @param Width : map width
+	 * @param Height : map height
 	 * @return True for success
 	 */
 	public boolean createSenderMemory(String name, int Width, int Height) 
@@ -433,8 +957,8 @@ public class Spout {
 	 * Change the size of a sender memory map.
 	 * 
 	 * @param name Sender name
-	 * @param Width - new map width
-	 * @param Height - new map height
+	 * @param Width : new map width
+	 * @param Height : new map height
 	 * @return True for success
 	 */
 	public boolean updateSenderMemorySize(String name, int Width, int Height) 
@@ -446,7 +970,7 @@ public class Spout {
 	 * Write a string to the memory map.
 	 * 
 	 * The map size must be sufficient for the string.
-	 * @param sValue - string to be written
+	 * @param sValue : string to be written
 	 * @return True for success
 	 */
 	public boolean writeSenderString(String sValue) 
@@ -479,258 +1003,7 @@ public class Spout {
 	{
 		JNISpout.unlockSenderMemory(spoutPtr);
 	}
-	
-	
-	// =========================================== //
-	//                   RECEIVER                  //
-	// =========================================== //
-	/**
-	 *  Initialize a Receiver. 
-	 * 
-	 * If the named sender is not running or if the name is not specified,
-	 * the receiver will attempt to connect with the active sender.
-	 * If the sender is found, the name is returned and set.
-	 *  
-	 * @param name - sender name to be used (optional)
-	 * @return true if connection with a sender succeeded
-	 */
-	public boolean createReceiver(String name) {
-
-		// Image size values passed in are modified and passed back
-		// as the size of the sender that the receiver connects to.
-		dim[0] = parent.width;
-		dim[1] = parent.height;
-		String newname;
-
-		if(name.isEmpty() || name.equals("") ) {
-			name = senderName; // existing name if any
-		}
-		else {
-			senderName = name; // name has been specified
-		}
-
-		if(JNISpout.createReceiver(name, dim, spoutPtr)) {
-			
-			// Initialization succeeded and there was a sender running
-			newname = JNISpout.getSpoutSenderName(spoutPtr);
-
-			// dim will be returned with the size of the sender it connected to
-			if(newname != null && newname.length() > 0) {
-				bReceiverInitialized = true;
-				senderName = newname;
-				spoutReport(bReceiverInitialized);
-				System.out.println("Found sender : '" + senderName + "' (" + dim[0] + "x" + dim[1] + ")" );
-			}
-		}
-		else {
-			bReceiverInitialized = false;
-			return false;
-		}
-
-		return true;
-
-	} // end Receiver initialization
-
-	/**
-	 * Close a receiver.
-	 * 
-	 * All resources of the receiver are released.
-	 * 
-	 */
-	public void closeReceiver() {
-		if(JNISpout.releaseReceiver(spoutPtr))
-			System.out.println("Receiver closed");
-		else
-			System.out.println("No receiver to close");
-		bReceiverInitialized = false;
-	} 
-	
-	/**
-	 * Receive into a local graphics object and draw it directly.
-	 * 
-	 * @return true if a texture was received.
-	 */
-	public boolean receiveTexture()
-	{
-		// If no sender, keep looking
-		if(!bReceiverInitialized) {
-			createReceiver("");
-			return false;
-		}
-
-		boolean bInvert = true;
-		if(invertMode >= 0) bInvert = (invertMode == 1);
 		
-		// Adjust the local graphics object to the current sender size
-		if(pgs == null || dim[0] != pgs.width || dim[1] != pgs.height && dim[0] > 0 && dim[1] > 0) {
-			pgs = parent.createGraphics(dim[0], dim[1], PConstants.P2D);
-		}
-		else {
-			// Receive into the local graphics object and draw it.
-			// Sender dimensions (dim) are sent as well as returned
-			// The graphics size is adjusted next time round
-			Texture tex = pgl.getTexture(pgs);
-			if(JNISpout.receiveTexture(dim, tex.glName, tex.glTarget, bInvert, spoutPtr)) {
-				parent.image(pgs, 0, 0, parent.width, parent.height);
-			}
-			else {
-				JNISpout.releaseReceiver(spoutPtr);
-				senderName = "";
-				bReceiverInitialized = false;
-				return false;
-			}
-		}
-		return true;
-
-	} // end receiveTexture
-
-	/**
-	 * Receive into graphics.
-	 * 
-	 * Sender changes are detected in JNISpout.ReceiveTexture
-	 * and returned. The PGraphics is resized the next time.
-	 * 
-	 * @param pg - the graphics to be used and returned
-	 * @return true if a texture was returned
-	 */
-	public PGraphics receiveTexture(PGraphics pg)
-	{
-		// If no sender, keep looking
-		if(!bReceiverInitialized) {
-			createReceiver("");
-			return pg;
-		}
-
-		boolean bInvert = true; // default for this function
-		if(invertMode >= 0) bInvert = (invertMode == 1);
-
-		// Adjust the graphics to the current sender size
-		if(dim[0] != pg.width || dim[1] != pg.height && dim[0] > 0 && dim[1] > 0) {
-			pg = parent.createGraphics(dim[0], dim[1], PConstants.P2D);
-		}
-		else {
-			// Sender dimensions (dim) are sent as well as returned
-			// The graphics size is adjusted next time round
-			Texture tex = pgl.getTexture(pg);
-			if(!JNISpout.receiveTexture(dim, tex.glName, tex.glTarget, bInvert, spoutPtr)) {
-				JNISpout.releaseReceiver(spoutPtr);
-				senderName = "";
-				pg.updatePixels();
-				bReceiverInitialized = false;
-			}
-		}
-
-		return pg;    
-	}
-
-	/**
-	 * Receive into an image texture.
-	 * 
-	 * @param img - the image to be used and returned
-	 * @return true if a texture was returned
-	 */
-	public PImage receiveTexture(PImage img) {
-
-		// If no sender, keep looking
-		if(!bReceiverInitialized) {
-			createReceiver("");
-			return img;
-		}
-
-		boolean bInvert = false; // default for this function
-		if(invertMode >= 0) bInvert = (invertMode == 1);
-
-		if(dim[0] != img.width || dim[1] != img.height && dim[0] > 0 && dim[1] > 0) {
-			img.resize(dim[0], dim[1]);
-		}
-		else {
-			Texture tex = pgl.getTexture(img);
-			if(!JNISpout.receiveTexture(dim, tex.glName, tex.glTarget, bInvert, spoutPtr)) {
-				JNISpout.releaseReceiver(spoutPtr);
-				senderName = "";
-				img.updatePixels();
-				bReceiverInitialized = false;
-			}
-		}    
-
-		return img;
-	}
-
-	
-	/**
-	 * Receive into image pixels.
-	 * 
-	 * @param img - the image to be used and returned
-	 * @return true if pixels were returned
-	 */
-	public PImage receivePixels(PImage img) {
-
-		// If no sender, keep looking
-		if(!bReceiverInitialized) {
-			createReceiver("");
-			return img;
-		}
-
-		boolean bInvert = false; // default for this function
-		if(invertMode >= 0) bInvert = (invertMode == 1);
-
-		if(dim[0] != img.width || dim[1] != img.height && dim[0] > 0 && dim[1] > 0) {
-			img.resize(dim[0], dim[1]);
-		}
-		else {
-			img.loadPixels();
-			if(!JNISpout.receivePixels(dim, img.pixels, spoutPtr)) {
-				JNISpout.releaseReceiver(spoutPtr);
-				senderName = "";
-				bReceiverInitialized = false;
-			}
-		    img.updatePixels();
-		}
-
-		return img;
-	}
-	
-	/**
-	 * Pop up SpoutPanel to select a sender.
-	 * 
-	 * If the user selected a different one, attach to it.
-	 * Requires Spout installation 2.004 or higher.
-	 */
-	public void selectSender()
-	{
-		JNISpout.senderDialog(spoutPtr);
-	}
-	
-	/**
-	 * Resize the receiver drawing surface and sketch window to that of the sender
-	 * 
-	 * Requires Processing 3.
-	 * Optional.
-	 */
-	public void resizeFrame()
-	{
-		if(!bReceiverInitialized) return;
-		if(parent.width != dim[0] || parent.height != dim[1]  && dim[0] > 0 && dim[1] > 0) {
-			// Only for Processing 3
-			parent.getSurface().setSize(dim[0], dim[1]);
-		}
-	}
-
-	
-	/**
-	 * Release everything
-	 */
-	public void spoutCleanup()
-	{
-		// infoBox("spoutCleanup");
-		if(bSenderInitialized) JNISpout.releaseSender(spoutPtr);
-		if(bReceiverInitialized) JNISpout.releaseReceiver(spoutPtr);
-		if(spoutPtr > 0) JNISpout.deInit(spoutPtr);
-		bSenderInitialized = false;
-		bReceiverInitialized = false;
-		spoutPtr = 0;
-    }
-	
 	// =========================================== //
 	//                   UTILITY                   //
 	// =========================================== //
@@ -738,7 +1011,7 @@ public class Spout {
 	/**
 	 * User option to set texture inversion for send and receive
 	 * 
-	 * @param bInvert - true or false as required
+	 * @param bInvert : true or false as required
 	 */
 	public void setInvert(boolean bInvert)
 	{
@@ -752,7 +1025,7 @@ public class Spout {
 	/**
 	 * Print current settings to the console.
 	 * 
-	 * @param bInit - the initialization mode
+	 * @param bInit : the initialization mode
 	 */
 	public void spoutReport(boolean bInit)
 	{
@@ -774,11 +1047,15 @@ public class Spout {
 	/**
 	 * Pop up a MessageBox dialog
 	 * 
-	 * @param infoMessage - the message to show
+	 * @param infoMessage : the message to show
 	 */
 	public void infoBox(String infoMessage)
     {
-        JOptionPane.showMessageDialog(null, infoMessage, "Spout", JOptionPane.INFORMATION_MESSAGE);
+        // JOptionPane.showMessageDialog(null, infoMessage, "Spout", JOptionPane.INFORMATION_MESSAGE);
+		// Set message dialog topmost so it does not get lost
+		JFrame jf=new JFrame();
+        jf.setAlwaysOnTop(true);
+        JOptionPane.showMessageDialog(jf, infoMessage, "Spout", JOptionPane.INFORMATION_MESSAGE);
     }	
 
 } // end class Spout

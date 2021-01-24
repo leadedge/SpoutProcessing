@@ -7,7 +7,7 @@ The following describes how to set up a Processing Library project in Eclipse an
 	* Open Eclipse (NOT the Project's!!) "Window>Preferences" window. 
 	* Under "Java > Build Path > User Libraries", select "New..." and call it "Processing3"
 	* select the just created library and select "Add External JARs...". 
-  	* Locate and add Processing's `core.jar` to your build path. Read the [section below](#AddingJARs) regarding where to find the `core.jar` file.
+  	* Locate and add Processing's `core.jar` to your build path. Read the [section below](AddingJARs) regarding where to find the `core.jar` file.
   	* Confirm the setup with "OK".
 1. Add a custom export path for the final library. Usually it is located at ${user.home}/Documents/Processing/libraries, but not everybody likes them there. so we have to create a custom variable.
 	* Open (again)Eclipse "Window>Preferences" window. 

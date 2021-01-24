@@ -1,10 +1,10 @@
 //
 //                MultipleSpoutReceivers
 //
-//           Receive from multiple Spout senders
-//       Use with the "MultipleSpoutSenders" sketch     
-//
-//                  spout.zeal.co
+//        Receive from as multiple Spout senders
+//      Use with the "MultipleSpoutSenders" sketch
+//                   Spout 2.007
+//              https://spout.zeal.co
 //
 //        Based on a Processing Syphon example
 //        https://github.com/Syphon/Processing
@@ -19,10 +19,15 @@ Spout[] receivers;
 
 
 void setup() {
-  size(640, 360, P3D);
+  
+  size(1280, 720, P3D);
+  
+  // Screen text size
+  textSize(16);
+  
   canvas = new PGraphics[nReceivers];
   for (int i = 0; i < nReceivers; i++) {
-    canvas[i] = createGraphics(320, 180, P2D);
+    canvas[i] = createGraphics(640, 360, P2D);
   }
 
   // Create Spout receivers to receive the frames.
@@ -42,22 +47,45 @@ void setup() {
     // (see mousePressed).
     //
     // String sendername = "Processing Spout"+i;
-    // receivers[i].createReceiver(sendername);
+    // receivers[i].setReceiverName(sendername);
     //
   }
   
 }
 
 void draw() {
+  
+  background(0);
+  
   for (int i = 0; i < nReceivers; i++) {
       // receiveTexture will detect a sender if the
       // receiver for that quadrant is not initialized
       // for a particular sender name.
       canvas[i] = receivers[i].receiveTexture(canvas[i]);
-      // Draw - the canvas object may have been re-sized
-      // If a different sender is selected for that cell
-      image(canvas[i], 320*(i%2), 180*(i/2), 320, 180); 
-    }
+      if(canvas[i].loaded) {
+        // Draw for successful receive
+        // The canvas object may have been re-sized if
+        // a different sender is selected for that cell
+        image(canvas[i], 640*(i%2), 360*(i/2), 640, 360);
+        String senderName = receivers[i].getSenderName();
+        if(senderName.length() > 0) {
+           // Report sender fps and frame number if the option is activated
+           // Applications < Spout 2.007 will have no frame information
+           if(receivers[i].getSenderFrame() > 0) {
+             text("Receiving from : " + senderName + "  (" 
+                 + receivers[i].getSenderWidth() + "x" 
+                 + receivers[i].getSenderHeight() + ") - fps "
+                 + receivers[i].getSenderFps() + " : frame "
+                 + receivers[i].getSenderFrame(), 640*(i%2)+15, 360*(i/2)+30);
+           }
+           else {
+              text("Receiving from : " + senderName + "  (" 
+                 + receivers[i].getSenderWidth() + "x" 
+                 + receivers[i].getSenderHeight() + ")", 640*(i%2)+15, 360*(i/2)+30);
+          }
+        }
+      }
+   }
 }
 
 // SELECT A SPOUT SENDER

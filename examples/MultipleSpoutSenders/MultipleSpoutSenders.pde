@@ -2,12 +2,12 @@
 //              MultipleSpoutSenders
 //
 //          Send as multiple Spout senders
-//       Use with the "MultipleSpoutReceivers" sketch
+//     Use with the "MultipleSpoutReceivers" sketch
+//                   Spout 2.007
+//              https://spout.zeal.co
 //
-//                 spout.zeal.co
-//
-//         Based on a Processing Syphon example
-//         https://github.com/Syphon/Processing
+//        Based on a Processing Syphon example
+//        https://github.com/Syphon/Processing
 //
 
 // IMPORT THE SPOUT LIBRARY
@@ -20,7 +20,9 @@ color[] colors;
 
 
 void setup() {
+  
   size(640, 360, P3D);
+  
   canvas = new PGraphics[nSenders];
   for (int i = 0; i < nSenders; i++) {
     canvas[i] = createGraphics(320, 180, P3D);
@@ -37,8 +39,9 @@ void setup() {
   for (int i = 0; i < nSenders; i++) { 
     senders[i] = new Spout(this);
     String sendername = "Processing Spout"+i;
-    senders[i].createSender(sendername, 320, 180);
+    senders[i].setSenderName(sendername);
   }
+  
 }
 
 void draw() {
