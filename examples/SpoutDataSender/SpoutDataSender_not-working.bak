@@ -1,0 +1,189 @@
+//
+//            Spout Data Sender
+//
+//      Send texture and data to a Spout receiver
+//
+//            Spout 2.007
+//       https://spout.zeal.co
+//
+//      Texture Cube by Dave Bollinger
+//      http://processing.org/examples/texturecube.html
+//
+
+// IMPORT THE SPOUT LIBRARY
+import spout.*;
+
+PImage img; // image to use for the rotating cube
+PGraphics pgr; // Graphics for demo
+
+// DECLARE A SPOUT OBJECT
+Spout spout;
+
+int pressed = 0;
+int dragged = 0;
+
+void setup() {
+
+  // Initial window size
+  size(640, 360, P3D);
+  textureMode(NORMAL);
+  
+  // Screen text size
+  textSize(16);
+  
+  // Create a graphics object
+  pgr = createGraphics(1280, 720, P3D);
+  
+  // Load an image
+  img = loadImage("SpoutLogoMarble3.bmp");
+  
+  // CREATE A NEW SPOUT OBJECT
+  spout = new Spout(this);
+  
+  // GIVE THE SENDER A NAME
+  // A sender can be given any name.
+  // Otherwise the sketch folder name is used
+  // the first time "sendTexture" is called.  
+  spout.setSenderName("Spout Data Sender");
+  
+  // Option - set the sketch frame rate.
+  // In this example, the sender waits for a ready signal from
+  // the receiver and will synchronise with receiver framerate
+  // (Refer to the SpoutDataReceiver example)
+  frameRate(60);
+  
+} 
+
+void draw()  { 
+
+    background(0, 90, 100);
+    noStroke();
+    
+    //
+    // OPTION
+    //
+    // To avoid the receiver missing frames, the sender can wait
+    // until the receiver is ready to receive more data.
+    // If connected to the SpoutDataReceiver example, the sender will
+    // will run at the same framerate (30fps) instead of 60 fps.
+    // Use a timeout greater than the expected delay.
+    //
+    // This is only necessary if the applications require frame accuracy.
+    // It is not needed here but is included for demonstration.
+    // (Refer to the SpoutDataReceiver example).
+    //
+    spout.waitFrameSync(spout.getSenderName(), 67);    
+    
+    // Draw the rotating cube
+    pushMatrix();
+    translate(width/2.0, height/2.0, -100);
+    rotateX(frameCount/60.0);
+    rotateY(frameCount/60.0);      
+    scale(110);
+    TexturedCube(img);
+    popMatrix();
+    
+    // Send the texture of the drawing sufrface
+    spout.sendTexture();
+        
+    //
+    // Send a data buffer
+    //
+    // The string contains byte data, often known as per-frame metadata,
+    // which might be used for various purposes.
+    //
+    // This example sends mouse coordinates and pressed status to the receiver.
+    // (Refer to the SpoutDataReceiver example).
+    //
+    // int pressed = mousePressed?1:0; // convert boolean to int
+    
+    // Convert the coordinates to a string.
+    String senderdata = str(mouseX) + " " + str(mouseY) + " " + str(pressed);
+    
+    //
+    // The size of the memory buffer is established on the first call
+    // to writeMemoryBuffer. In this example, we need at least 10 characters 
+    // for two mouse coordinates and pressed status.
+    // Three characters each for the coordinates and one for status.
+    // separated by a space and terminated with a null.
+    // (3+1+3+1+1+1 = 10 bytes).
+    //
+    spout.writeMemoryBuffer(spout.getSenderName(), senderdata, 10);
+    
+    // Display info
+    text("Sending as : "
+      + spout.getSenderName() + " ("
+      + spout.getSenderWidth() + "x"
+      + spout.getSenderHeight() + ") - fps : "
+      + spout.getSenderFps() + " : frame "
+      + spout.getSenderFrame(), 15, 30);  
+   
+}
+
+void TexturedCube(PImage tex) {
+  
+  beginShape(QUADS);
+  texture(tex);
+
+  // +Z "front" face
+  vertex(-1, -1,  1, 0, 0);
+  vertex( 1, -1,  1, 1, 0);
+  vertex( 1,  1,  1, 1, 1);
+  vertex(-1,  1,  1, 0, 1);
+
+  // -Z "back" face
+  vertex( 1, -1, -1, 0, 0);
+  vertex(-1, -1, -1, 1, 0);
+  vertex(-1,  1, -1, 1, 1);
+  vertex( 1,  1, -1, 0, 1);
+
+  // +Y "bottom" face
+  vertex(-1,  1,  1, 0, 0);
+  vertex( 1,  1,  1, 1, 0);
+  vertex( 1,  1, -1, 1, 1);
+  vertex(-1,  1, -1, 0, 1);
+
+  // -Y "top" face
+  vertex(-1, -1, -1, 0, 0);
+  vertex( 1, -1, -1, 1, 0);
+  vertex( 1, -1,  1, 1, 1);
+  vertex(-1, -1,  1, 0, 1);
+
+  // +X "right" face
+  vertex( 1, -1,  1, 0, 0);
+  vertex( 1, -1, -1, 1, 0);
+  vertex( 1,  1, -1, 1, 1);
+  vertex( 1,  1,  1, 0, 1);
+
+  // -X "left" face
+  vertex(-1, -1, -1, 0, 0);
+  vertex(-1, -1,  1, 1, 0);
+  vertex(-1,  1,  1, 1, 1);
+  vertex(-1,  1, -1, 0, 1);
+
+  endShape();
+}
+
+void mousePressed()
+{
+  pressed = 1;
+  dragged = 0;
+}
+
+void mouseReleased()
+{
+  pressed = 0;
+  dragged = 0;
+}
+
+void mouseMoved()
+{
+  pressed = 0;
+  dragged = 0;
+}
+
+void mouseDragged()
+{
+  pressed = 1;
+  dragged = 1;
+}

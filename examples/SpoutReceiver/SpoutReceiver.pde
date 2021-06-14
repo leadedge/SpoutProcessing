@@ -55,7 +55,7 @@ void draw() {
     // OPTION 1: Receive and draw the shared texture
     if(spout.receiveTexture())
         spout.drawTexture();
-
+     
     // OPTION 2: Receive into PGraphics
     // pgr = spout.receiveTexture(pgr);
     // if(pgr.loaded)
@@ -67,15 +67,17 @@ void draw() {
     // if(img.loaded)
     //    image(img, 0, 0, width, height);
   
-    // Optionally resize the window to match the sender
+    // Option: resize the window to match the sender
     // spout.resizeFrame();
-   
+    
     // Display sender info
     showInfo();
     
 }
 
 void showInfo() {
+  
+    fill(255);
 
     if(spout.isReceiverConnected()) {
       // Report sender fps and frame number if the option is activated

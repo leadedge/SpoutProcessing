@@ -86,6 +86,12 @@ package spout;
 //				   TODO : sender graphics resize
 //				   Rebuild for revised 2.007 SpoutGL and updated JNISpout library (Processing 3.5.4)
 //		24.01.21   Rebuild for 2.007 release Version 2.0.7.1
+//		13.04.21   Add setFrameSync, waitFrameSync, writeMemoryBuffer, readMemoryBuffer
+//		21.05.21   Rebuild JNI/Processing libraries
+//		22.05.21   Add data sender/receiver examples
+//		27.05.21   Add createMemoryBuffer
+//		14.06.21   Rebuild for 2.007e release Version 2.0.7.2
+//
 //
 // ========================================================================================================
 
@@ -120,6 +126,7 @@ public class Spout {
 	boolean bPixelsLoaded;
 	int receiverType; // 0 - parent, 1 - graphics, 2 - image
 	int invertMode; // User setting for texture invert
+	int bufferSize; // shared memory buffer size
 	
 	/**
 	 * Create a Spout Object.
@@ -1003,7 +1010,171 @@ public class Spout {
 	{
 		JNISpout.unlockSenderMemory(spoutPtr);
 	}
+	
+	// =========================================== //
+	//              Sync event signals
+	// =========================================== //
+	
+	/** 
+	 * Signal sync event.
+	 *   Create a named sync event and set for test
+	 *  
+	 */
+	public void setFrameSync(String sendername)
+	{
+		JNISpout.setFrameSync(sendername, spoutPtr);
+	}
+	
+	/** 
+	 * Wait or test for named sync event.
+	 *   Wait until the sync event is signalled or the timeout elapses.
+	 *   Events are typically created based on the sender name and are
+	 *   effective between a single sender/receiver pair.
+	 *    - For testing for a signal, use a wait timeout of zero.
+	 *    - For synchronization, use a timeout greater than the expected delay
+	 * 
+	 * @return success of wait
+	 */
+	public boolean waitFrameSync(String sendername, int timeout)
+	{
+		return JNISpout.waitFrameSync(sendername, timeout, spoutPtr);
+	}
 		
+	
+	// =========================================== //
+	//              Per frame metadata
+	// =========================================== //
+	
+	/** 
+	 * Write a string to a sender shared memory buffer.
+	 *   Create a shared memory map of the required size if it does not exist.
+	 *   Subsequently the map size is fixed. To allow for varying string length
+	 *   create shared memory of sufficient size in advance. 
+	 *   The map is closed when the sender is released.
+	 *   
+	 * @return success of write
+	 */
+	public boolean setSenderData(String data)
+	{
+		// A sender name is required
+		if(!bSenderInitialized)
+			return false;
+
+		// writeMemoryBuffer creates a map if not already
+		return JNISpout.writeMemoryBuffer(senderName, data, data.length(), spoutPtr);
+		
+	}
+	
+	/** 
+	 * Read sender shared memory buffer to a string.
+	 *
+	 * @return the string read
+	 */
+	public String getSenderData()
+	{
+		// A connected sender name is required
+		if(!bReceiverConnected)
+			return "";
+		
+		// The memory map is created by the sender
+		if(bufferSize == 0)
+			bufferSize = JNISpout.getMemoryBufferSize(senderName, spoutPtr);
+			
+		return JNISpout.readMemoryBuffer(senderName, bufferSize, spoutPtr);
+
+	}
+		
+	/** 
+	 * Create sender shared memory buffer.
+	 *   Create a shared memory map of the required size.
+	 *   The map is closed when the sender is released.
+	 *   
+	 * @return success of create
+	 */
+	public boolean createSenderBuffer(int length)
+	{
+		// A sender name is required
+		// but sender initialization is not
+		if(senderName == "")
+			return false;
+		
+		if(JNISpout.createMemoryBuffer(senderName, length, spoutPtr)) {
+			bufferSize = length;
+			return true;
+		}
+		return false;
+	}
+	
+	
+	/** 
+	 * Write buffer to sender shared memory.
+	 *   Create a shared memory map of the required size if it does not exist.
+	 *   The map is closed when the sender is released.
+	 *   
+	 * @return success of write
+	 */
+	public boolean writeMemoryBuffer(String sendername, String data, int length)
+	{
+		if(JNISpout.writeMemoryBuffer(sendername, data, length, spoutPtr)) {
+			if(bufferSize == 0)
+				bufferSize = JNISpout.getMemoryBufferSize(sendername, spoutPtr);
+			return true;
+		}
+		return false;
+	}
+	
+	/** 
+	 * Read sender shared memory to buffer.
+	 *   Open a sender memory map and retain the handle.
+	 *   The map is closed when the receiver is released.
+	 *
+	 * @return number of bytes read
+	 */
+	public String readMemoryBuffer(String sendername, int maxlength)
+	{
+		return JNISpout.readMemoryBuffer(sendername, maxlength, spoutPtr);
+	}
+	
+	/** 
+	 * Create sender shared memory buffer.
+	 *   Create a shared memory map of the required size.
+	 *   The map is closed when the sender is released.
+	 *   
+	 * @return success of create
+	 */
+	public boolean createMemoryBuffer(String sendername, int length)
+	{
+		if(JNISpout.createMemoryBuffer(sendername, length, spoutPtr)) {
+			bufferSize = length;
+			return true;
+		}
+		return false;
+	}
+	
+	/** 
+	 * Delete sender shared memory buffer.
+	 *   
+	 * @return success of delete
+	 */
+	public boolean deleteMemoryBuffer()
+	{
+		if(JNISpout.deleteMemoryBuffer(spoutPtr)) {
+			bufferSize = 0;
+			return true;
+		}
+		return false;
+	}
+	
+	/** 
+	 * Get sender shared memory buffer size.
+	 * 
+	 * @return size of memory map
+	 */
+	public int getMemoryBufferSize()
+	{
+		return bufferSize; // JNISpout.getMemoryBufferSize(spoutPtr);
+	}
+	
 	// =========================================== //
 	//                   UTILITY                   //
 	// =========================================== //

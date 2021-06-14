@@ -76,6 +76,16 @@ public class JNISpout {
   protected static native void closeSenderMemory(long ptr);
   protected static native long lockSenderMemory(long ptr);
   protected static native void unlockSenderMemory(long ptr);
- 
+  
+  // Sync event signals
+  protected static native void setFrameSync(String SenderName, long ptr);
+  protected static native boolean waitFrameSync(String SenderName, int dwTimeout, long ptr);
+  
+  // Per-frame metadata
+  protected static native boolean writeMemoryBuffer(String name, String data, int length, long ptr);
+  protected static native String readMemoryBuffer(String name, int maxlength, long ptr);
+  protected static native boolean createMemoryBuffer(String name, int length, long ptr);
+  protected static native boolean deleteMemoryBuffer(long ptr);
+  protected static native int getMemoryBufferSize(String name, long ptr);
   
 }

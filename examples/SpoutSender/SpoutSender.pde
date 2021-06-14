@@ -96,7 +96,7 @@ void draw()  {
 
     background(0, 90, 100);
     noStroke();
-    
+
     // OPTION 1: SEND THE TEXTURE OF THE DRAWING SURFACE
     // Draw the rotating cube
     pushMatrix();
@@ -106,6 +106,7 @@ void draw()  {
     scale(110);
     TexturedCube(img);
     popMatrix();
+    
     // Send at the size of the window    
     spout.sendTexture();
     
@@ -134,28 +135,16 @@ void draw()  {
     // Send at the size of the image
     spout.sendTexture(img);
     */
-    
+
     // Display info
     text("Sending as : "
       + spout.getSenderName() + " ("
       + spout.getSenderWidth() + "x"
       + spout.getSenderHeight() + ") - fps : "
-      + (int)(round(frameRate+0.5)), 35, 30);
-    
+      + spout.getSenderFps() + " : frame "
+      + spout.getSenderFrame(), 15, 30);  
+   
 }
-
-// LJ DEBUG
-void exit() {
-  println("exiting");
-  super.exit();
-}
-
-// LJ DEBUG
-void stop() {
-  println("stopping");
-  super.stop();
-}
-
 
 void TexturedCube(PImage tex) {
   
