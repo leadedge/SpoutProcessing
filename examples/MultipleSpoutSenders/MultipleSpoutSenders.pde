@@ -21,11 +21,12 @@ color[] colors;
 
 void setup() {
   
-  size(640, 360, P3D);
+  size(1280, 720, P3D);
   
+  // Create graphics objects for the senders
   canvas = new PGraphics[nSenders];
   for (int i = 0; i < nSenders; i++) {
-    canvas[i] = createGraphics(320, 180, P3D);
+    canvas[i] = createGraphics(640, 360, P3D);
   }
   
   colors = new color[4];
@@ -52,9 +53,9 @@ void draw() {
     canvas[i].translate(canvas[i].width/2, canvas[i].height/2);
     canvas[i].rotateX(frameCount * 0.01);
     canvas[i].rotateY(frameCount * 0.01);  
-    canvas[i].box(50);
+    canvas[i].box(150);
     canvas[i].endDraw();
     senders[i].sendTexture(canvas[i]);    
-    image(canvas[i], 320 * (i % 2), 180 * (i / 2));
+    image(canvas[i], 640 * (i % 2), 360 * (i / 2));
   }
 }

@@ -14,7 +14,6 @@
 import spout.*;
 
 PImage img; // image to use for the rotating cube
-PGraphics pgr; // Graphics for demo
 
 // DECLARE A SPOUT OBJECT
 Spout spout;
@@ -33,10 +32,7 @@ void setup() {
   
   // Screen text size
   textSize(16);
-  
-  // Create a graphics object
-  pgr = createGraphics(1280, 720, P3D);
-  
+    
   // Load an image
   img = loadImage("SpoutLogoMarble3.bmp");
   

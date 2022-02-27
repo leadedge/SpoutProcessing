@@ -91,7 +91,16 @@ package spout;
 //		22.05.21   Add data sender/receiver examples
 //		27.05.21   Add createMemoryBuffer
 //		14.06.21   Rebuild for 2.007e release Version 2.0.7.2
-//
+//				   Publish Release 2.0.7.2 tagged as "latest" and test download from sketch
+//		23.02.22   Add separate function ReceiveImage(PImage)
+//                 Load pixels and update them from the received texture
+//		26.02.22   pgs alloccated by receiveGraphics rathere than in advance
+//		           loadPixels() of PGraphics object in receiveGraphics to avoid null pixels array
+//				   getSenderData = return empty string if bufferSize = 0
+//				   Initialize bufferSize on Spout object create
+//		27.02.22   Publish Release 2.0.7.3
+//				   Processing 3.5.4 retained while Processing 4 is beta
+//				   Testing with Processing 4 shows no problems
 //
 // ========================================================================================================
 
@@ -117,7 +126,7 @@ public class Spout {
 	long spoutPtr;
 	PApplet parent;
 	PGraphicsOpenGL pgl;
-	PGraphics pgs; // local graphics object for receiving textures
+	PGraphics pgs; // local graphics object for receiving textures (allocated by receiveGraphics)
 	String senderName; // the sender name
 	String userSenderName; // user specified sender name for CreateReceiver
 	int[] dim = new int[2]; // Sender dimensions
@@ -157,9 +166,8 @@ public class Spout {
 		userSenderName = "";
 		receiverType = 0; // receive to parent graphics
 		invertMode = -1; // User has not set any mode - use function defaults
-		// Initialize a local graphics object in advance for receiveTexture
-		pgs = parent.createGraphics(parent.width, parent.height, PConstants.P2D);
-		
+		bufferSize = 0; // No data buffer
+
 		parent.registerMethod("dispose", this);
 		
 	}  
@@ -288,6 +296,7 @@ public class Spout {
 				System.out.println("Sender closed");
 			else
 				System.out.println("No sender to close");
+			
 			bSenderInitialized = false;
 		}
 	} 
@@ -433,27 +442,22 @@ public class Spout {
 		
 		if(JNISpout.createReceiver(name, dim, spoutPtr)) {
 			// Initialization succeeded and there was a sender running
-			newname = getSenderName();
-			// dim will be returned with the size of the sender it connected to
-			if(newname != null && !newname.isEmpty() && newname.length() > 0) {
-				// Set the global sender name
-				senderName = newname;
-				dim[0] = JNISpout.getSenderWidth(spoutPtr);
-				dim[1] = JNISpout.getSenderHeight(spoutPtr);
-				bReceiverConnected = true;
-				spoutReport(true);
-				// Once connected, the user can select new senders
-				// and ReceiveTexture adapts to the change without
-				// needing to call createReceiver again
-				return true;
-				
-			}
+			// sender name and dimensions are established from the sender it connected to
+			senderName = JNISpout.getSenderName(spoutPtr);
+			dim[0] = JNISpout.getSenderWidth(spoutPtr);
+			dim[1] = JNISpout.getSenderHeight(spoutPtr);
+			bReceiverConnected = true;
+			spoutReport(true);
+			// Once connected, the user can select new senders
+			// and graphics or images are re-allocated
+			return true;
 		}
-
+		
 		bReceiverConnected = false;
 		return false;
 
 	} // end createReceiver
+	
 	
 	/**
 	 * @return receiver status
@@ -471,6 +475,13 @@ public class Spout {
 			System.out.println("Receiver closed");
 		else
 			System.out.println("No receiver to close");
+		
+		// Delete shared memory buffer if it has been created
+		if(bufferSize > 0) {
+			deleteMemoryBuffer();
+			bufferSize = 0;
+		}
+		
 		bReceiverConnected = false;
 	} 
 	
@@ -492,12 +503,13 @@ public class Spout {
 	 */
 	public void drawTexture()
 	{
-		if(pgs.loaded && pgs.displayable())
+		if(pgs.loaded && pgs.displayable()) {
 			parent.image(pgs, 0, 0, parent.width, parent.height);
+		}
 	}
 	
 	/**
-	 * Receive into graphics
+	 * Receive graphics texture
 	 * 
 	 * @param pgr : the graphics to be used
 	 * @return changed graphics
@@ -508,13 +520,23 @@ public class Spout {
 	}
 	
 	/**
-	 * Receive into an image
+	 * Receive image texture
 	 * 
 	 * @param img : the image to be used
 	 * @return changed image
 	 */
 	public PImage receiveTexture(PImage img) {
-		return receiveImage(img);
+		return receiveImage(img, false);
+	}
+	
+	/**
+	 * Receive image pixels
+	 * 
+	 * @param img : the image to be used
+	 * @return changed image
+	 */
+	public PImage receiveImage(PImage img) {
+		return receiveImage(img, true);		
 	}
 	
 	/**
@@ -533,7 +555,6 @@ public class Spout {
 	 */
 	public PGraphics receiveGraphics(PGraphics pgr)
 	{	
-		
 		boolean bInvert = true; // default for this function
 		if(invertMode >= 0) bInvert = (invertMode == 1);
 		
@@ -541,82 +562,93 @@ public class Spout {
 		if(!isConnected())
 			return pgr;
 		
-		if(pgr == null ) {
-			// Create a graphics object if the user has not done so
-			pgr = parent.createGraphics(parent.width, parent.height, PConstants.P2D);
-			// TODO : check initial pixel update
-		}
-		else if(dim[0] != pgr.width || dim[1] != pgr.height && dim[0] > 0 && dim[1] > 0) {
-			// Adjust the graphics to the current sender size
+		// Create a graphics object or adjust the graphics to the current sender size
+		if(pgr == null || dim[0] != pgr.width || dim[1] != pgr.height && dim[0] > 0 && dim[1] > 0) {
 			pgr = parent.createGraphics(dim[0], dim[1], PConstants.P2D);
-			pgr.loadPixels();
-		}		
-		else if(bReceiverConnected) {
-			// Receive a texture if connected
-			// Sender dimensions (dim) are sent as well as returned
-			// If the sender changes size, the graphics is adjusted next time round
-			if(!bPixelsLoaded) {
-				pgr.loadPixels();
-				bPixelsLoaded = true;
-			}
-			
-			Texture tex = pgl.getTexture(pgr);
-			if(!JNISpout.receiveTexture(dim, tex.glName, tex.glTarget, bInvert, spoutPtr)) {
-				JNISpout.releaseReceiver(spoutPtr);
-				pgr.updatePixels(); // Clear the graphics of the last frame
-				bReceiverConnected = false;
-			}
-			
 		}
 		
-		// created pgr must be returned for the new size
+		// Receive a texture if connected
+		// Sender dimensions (dim) are sent as well as returned
+		// If the sender changes size, the graphics object is adjusted next time round
+		if(bReceiverConnected) {
+			pgr.loadPixels(); // Necessary here or pixels array is null
+			Texture tex = pgl.getTexture(pgr);
+			if(!JNISpout.receiveTexture(dim, tex.glName, tex.glTarget, bInvert, spoutPtr)) {
+				// Clear the graphics of the last frame
+				pgr.updatePixels();
+				// A new receiver is created
+				JNISpout.releaseReceiver(spoutPtr);
+				bReceiverConnected = false;
+			}
+		}
+		
+		// pgr is returned with the new size
 		return pgr;
 	}
 	
 	/**
-	 * Receive an image texture
+	 * Receive an image texture with option for pixels
 	 * 
 	 * @param img : the image to be used
+	 * @param loadpixels : load image pixels from the texture
 	 * @return changed image
 	 */
-	public PImage receiveImage(PImage img) {
+	public PImage receiveImage(PImage img, boolean loadpixels) {
 		
 		// If not connected keep looking
-		if(!isConnected())
+		if(!isConnected()) {
 			return img;
-		
-		if(img == null ) {
-			// Create an image object if the user has not done so
-			img = parent.createImage(parent.width, parent.height, PConstants.ARGB);
 		}
-		else if(dim[0] != img.width || dim[1] != img.height && dim[0] > 0 && dim[1] > 0) {
-			// Adjust the image to the current sender size
+		
+		// Receive into local graphics first
+		pgs = receiveGraphics(pgs);
+
+		// Create an image object or adjust the image to the current sender size
+		if(img == null || dim[0] != img.width || dim[1] != img.height && dim[0] > 0 && dim[1] > 0) {
 			img = parent.createImage(dim[0], dim[1], PConstants.ARGB);
 		}		
-		else if(bReceiverConnected) {		
-			// Receive into local graphics first
-			pgs = receiveGraphics(pgs);
-			// Use the PGraphics texture as the cache object for the image
-			// Adapted from Syphon client code
-			// https://github.com/Syphon/Processing/blob/master/src/codeanticode/syphon/SyphonClient.java
-			Texture tex = pgl.getTexture(pgs);
-		    pgl.setCache(img, tex);			
-		}
-		// created img must be returned for the new size
+		
+		// Use the PGraphics texture as the cache object for the image
+		// Adapted from Syphon client code
+		// https://github.com/Syphon/Processing/blob/master/src/codeanticode/syphon/SyphonClient.java
+		Texture tex = pgl.getTexture(pgs);
+		pgl.setCache(img, tex);
+		    
+		// So far, only the image texture is updated, but not the pixels.
+		// For receive to pixels, increased time can be expected.
+		if(loadpixels) {
+		  	// Load pixels and update from the received texture
+		   	// (Adapted from Syphon client code)
+		   	// https://github.com/Syphon/Processing/blob/master/src/codeanticode/syphon/SyphonClient.java
+		   	// Slower than updating the texture alone
+		   	// (Typically 1920x1080 : 15msec, 3840x2160 : 60msec, compared with < 1 msec for texture)
+		   	// Load the pixel data of the current display window into the pixels[] array.
+		   	// This function must always be called before reading from or writing to pixels[]
+		   	// https://processing.org/reference/PImage_loadPixels_.html
+		   	img.loadPixels();
+	    	// Copy texture to pixels
+	    	// https://processing.github.io/processing-javadocs/core/processing/opengl/Texture.html
+	    	tex.get(img.pixels);
+	    	// After changes have been made, call updatePixels()
+	    	img.updatePixels();
+	    }
+		    
 		return img;
+		
 	}	
 	
-		
+	
 	/**
 	 * Is the receiver connected to a sender?
 	 *
 	 * @return new frame status
 	 */
 	public boolean isConnected() {
+		
 		if(!bReceiverConnected) {
-			// If no sender, keep looking
-			if(!createReceiver())
+			if(!createReceiver()) {
 				return false;
+			}
 		}
 		return true;
 	}	
@@ -992,6 +1024,7 @@ public class Spout {
 	{
 		JNISpout.closeSenderMemory(spoutPtr);
 	}
+	
 	/**
 	 * Lock a memory map for write or read access.
 	 * 
@@ -1077,10 +1110,16 @@ public class Spout {
 			return "";
 		
 		// The memory map is created by the sender
-		if(bufferSize == 0)
+		if(bufferSize == 0) {
 			bufferSize = JNISpout.getMemoryBufferSize(senderName, spoutPtr);
-			
-		return JNISpout.readMemoryBuffer(senderName, bufferSize, spoutPtr);
+		}
+		
+		if(bufferSize > 0) {	
+			return JNISpout.readMemoryBuffer(senderName, bufferSize, spoutPtr);
+		}
+		else {
+			return "";
+		}
 
 	}
 		

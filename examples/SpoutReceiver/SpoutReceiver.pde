@@ -9,8 +9,12 @@
 // IMPORT THE SPOUT LIBRARY
 import spout.*;
 
-PGraphics pgr; // Canvas to receive a texture
+// The first time that receiveTexure of receiveImage are called, 
+// the PGraphics or PImage objects are initialized with the size
+// of the sender that the receiver connects to. Thereafter, the
+// dimensions are changed to match the sender.
 PImage img; // Image to receive a texture
+PGraphics pgr; // Canvas to receive a texture
 
 // DECLARE A SPOUT OBJECT
 Spout spout;
@@ -27,13 +31,6 @@ void setup() {
   // Processing 3+ only
   surface.setResizable(true);
   
-  // Create a canvas or an image to receive the data.
-  // Objects can be created at any size.
-  // Their dimensions are changed to match the sender
-  // that the receiver connects to.  
-  pgr = createGraphics(width, height, PConstants.P2D);
-  img = createImage(width, height, ARGB);
-  
   // CREATE A NEW SPOUT OBJECT
   spout = new Spout(this);
 
@@ -42,31 +39,37 @@ void setup() {
   // but you can specify the name of the sender to receive from.
   // The receiver will then attempt to connect to that sender
   // spout.setReceiverName("Spout Demo Sender");
-  
+    
 } 
 
 
 void draw() {
-  
-    background(0);
     
+    //  
     // RECEIVE FROM A SENDER
-    
-    // OPTION 1: Receive and draw the shared texture
+    //
+      
+    // OPTION 1: Receive and draw the texture
     if(spout.receiveTexture())
         spout.drawTexture();
      
     // OPTION 2: Receive into PGraphics
     // pgr = spout.receiveTexture(pgr);
-    // if(pgr.loaded)
-    //  image(pgr, 0, 0, width, height);
-
-    // OPTION 3: Receive into PImage
-    // spout.receiveTexture(img);
+    // if(pgr != null)
+      // image(pgr, 0, 0, width, height);
+    
+    // OPTION 3: Receive into PImage texture
     // img = spout.receiveTexture(img);
+    // if(img != null)
+      // image(img, 0, 0, width, height);
+      
+    // OPTION 4: Receive into PImage pixels
+    // Note that receiving pixels is slower than receiving
+    // a texture alone and depends on the sender size.
+    // img = spout.receiveImage(img);
     // if(img.loaded)
-    //    image(img, 0, 0, width, height);
-  
+      // image(img, 0, 0, width, height);
+    
     // Option: resize the window to match the sender
     // spout.resizeFrame();
     
@@ -105,7 +108,8 @@ void mousePressed() {
   // SELECT A SPOUT SENDER
   if (mouseButton == RIGHT) {
     // Bring up a dialog to select a sender.
-    // Spout installation required
+    // SpoutSettings must have been run at least once
+    // to establish the location of "SpoutPanel"
     spout.selectSender();
   }
 }

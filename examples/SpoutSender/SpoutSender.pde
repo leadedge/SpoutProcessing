@@ -39,8 +39,10 @@ void setup() {
   // CREATE A NEW SPOUT OBJECT
   spout = new Spout(this);
   
-  // Option - enable Spout logging to detect warnings and errors
-  //   spout.enableSpoutLog();
+  // Option - enable Spout logging to detect warnings and errors.
+  // Note that the concolelogs will only show up in the sketch console
+  // window after the sketch is closed and not while the sketch is running.
+  // spout.enableSpoutLog();
   //
   // You can set the level above which the logs are shown
   // 0 : SPOUT_LOG_SILENT

@@ -10,8 +10,10 @@
 // IMPORT THE SPOUT LIBRARY
 import spout.*;
 
+// The first time that receiveTexure is called, the PGraphics object is
+// initialized with the size of the sender that the receiver connects to.
+// Thereafter, the dimensions are changed to match the sender.
 PGraphics pgr; // Canvas to receive a texture
-PImage img; // Image to receive a texture
 
 // VARIABLES FOR DATA EXCHANGE
 // (mouse coordinates and button status in this example)
@@ -25,7 +27,7 @@ int senderbutton  = 0;
 int senderpressed = 0;
 int senderdragged = 0;
 // String received
-String senderdata = "";
+String senderdata; // = "";
       
 // DECLARE A SPOUT OBJECT
 Spout spout;
@@ -42,13 +44,6 @@ void setup() {
   // Processing 3+ only
   surface.setResizable(true);
   
-  // Create a canvas or an image to receive the data.
-  // Objects can be created at any size.
-  // Their dimensions are changed to match the sender
-  // that the receiver connects to.  
-  pgr = createGraphics(width, height, PConstants.P2D);
-  img = createImage(width, height, ARGB);
-  
   // A 5 integer array for received data
   mousedata = new int[5];
   
@@ -58,8 +53,9 @@ void setup() {
   // CREATE A NEW SPOUT OBJECT
   spout = new Spout(this);
 
-  // Set the frame rate lower that the SpoutDataSender sketch
-  // to demonstrate frame sync functions.
+  // Set the frame rate (30) lower that the SpoutDataSender sketch (60)
+  // to demonstrate frame sync functions. The sender will synchronise
+  // with the receiver at 30fps (see setFrameSync in draw).
   frameRate(30.0);
   
 } 
@@ -67,9 +63,9 @@ void setup() {
 
 void draw() {
   
-    background(0);
-    
+    //
     // RECEIVE FROM A SENDER
+    //
     
     // Receive and draw the shared texture
     if(spout.receiveTexture()) {
@@ -83,30 +79,29 @@ void draw() {
       //
       // Method 1 (string)
       //
-      // The content is expected (Refer to the SpoutDataSender example).
+      // The content format is expected (Refer to the SpoutDataSender example).
       //
       senderdata = spout.getSenderData();
       
       // In this example, the received string contains
       // mouse coordinates and button status.
       if(senderdata.length() > 0) { 
-        
-        println(senderdata);
-        // Convert the string to integers
-        mousedata = int(split(senderdata, ' '));
-        // And the integer array to variables for legibility
-        if(mousedata.length >= 5) {
-          sendermousex  = mousedata[0];
-          sendermousey  = mousedata[1];
-          senderbutton  = mousedata[2];
-          senderpressed = mousedata[3];
-          senderdragged = mousedata[4];
-        }
+          println(senderdata);
+          // Convert the string to integers
+          mousedata = int(split(senderdata, ' '));
+          // And the integer array to variables for legibility
+          if(mousedata.length >= 5) {
+            sendermousex  = mousedata[0];
+            sendermousey  = mousedata[1];
+            senderbutton  = mousedata[2];
+            senderpressed = mousedata[3];
+            senderdragged = mousedata[4];
+          }
       } // end string method
       
       /*
       //
-      // Method 1 (xml)
+      // Method 2 (xml)
       //
       // The received string is in XML format.
       //
@@ -140,7 +135,7 @@ void draw() {
       */
       
       //
-      // Method 3 - depends on what the sender produced.
+      // Method 3 is your own and depends on what the sender produced.
       //
       
       
@@ -180,7 +175,7 @@ void draw() {
       circle(sendermousex, sendermousey, 24);
       
     }
-    
+   
     // Display sender info
     showInfo();
     
@@ -222,7 +217,8 @@ void mousePressed() {
   // SELECT A SPOUT SENDER
   if (mouseButton == RIGHT) {
     // Bring up a dialog to select a sender.
-    // Spout installation required
+    // SpoutSettings must have been run at least once
+    // to establish the location of "SpoutPanel"
     spout.selectSender();
   }
 }
