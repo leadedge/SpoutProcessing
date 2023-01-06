@@ -10,7 +10,7 @@ public class JNISpout {
 
 	// Java instead of operating system
 	String sunDataModel = System.getProperty("sun.arch.data.model");
-	System.out.println("Spout " + sunDataModel +"bit v2.0.7.0 - Java " + jvm_version);
+	System.out.println("Spout " + sunDataModel +"bit v2.0.7.5 - Java " + jvm_version);
 	// System.out.println("Java " + sunDataModel + "bit " + jvm_version);
 	if(sunDataModel.equals("32"))	
 		System.loadLibrary("JNISpout_32");
@@ -60,7 +60,6 @@ public class JNISpout {
   protected static native int getTextureID(long ptr);
   protected static native boolean getMemoryShareMode(long ptr);
   protected static native int getShareMode(long ptr);
-  protected static native boolean setAdapter(int index, long ptr);
   
   // SpoutControls
   protected static native boolean createControl(String name, String type, float minimum, float maximum, float value, String text, long ptr);

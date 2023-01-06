@@ -94,13 +94,18 @@ package spout;
 //				   Publish Release 2.0.7.2 tagged as "latest" and test download from sketch
 //		23.02.22   Add separate function ReceiveImage(PImage)
 //                 Load pixels and update them from the received texture
-//		26.02.22   pgs alloccated by receiveGraphics rathere than in advance
+//		26.02.22   pgs allocated by receiveGraphics rather than in advance
 //		           loadPixels() of PGraphics object in receiveGraphics to avoid null pixels array
 //				   getSenderData = return empty string if bufferSize = 0
 //				   Initialize bufferSize on Spout object create
 //		27.02.22   Publish Release 2.0.7.3
 //				   Processing 3.5.4 retained while Processing 4 is beta
 //				   Testing with Processing 4 shows no problems
+//		01.11.22   Change to core.jar Processing 4.0.1
+//				   Rebuild with updated JSpoutLIB libraries Release 2.0.7.5
+//		20.12.22   Remove SetAdapter from JNI library
+//		06.01.23   Update JSpoutLIB with SpoutGL files 2.007.009
+//				   Rebuild Release 2.0.7.5
 //
 // ========================================================================================================
 
@@ -833,17 +838,7 @@ public class Spout {
 	{
 		JNISpout.spoutLogFatal(text, spoutPtr);
 	}
-	
-	/**
-	 * Set the adapter for Spout output
-	 * @param index
-	 * @return
-	 */
-	public boolean setAdapter(int index)
-	{
-		return JNISpout.setAdapter(index, spoutPtr);
-	}
-	
+
 	/**
 	 * Resize the receiver drawing surface and sketch window to that of the sender
 	 * 
