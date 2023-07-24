@@ -31,7 +31,7 @@ void setup() {
   pgr = createGraphics(1280, 720, P3D);
   
   // Load an image
-  img = loadImage("SpoutLogoMarble3.bmp");
+  img = loadImage("SpoutLogoMarble3.jpg");
   
   // The dimensions of graphics or image objects
   // do not have to be the same as the sketch window

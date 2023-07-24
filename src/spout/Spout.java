@@ -106,6 +106,9 @@ package spout;
 //		20.12.22   Remove SetAdapter from JNI library
 //		06.01.23   Update JSpoutLIB with SpoutGL files 2.007.009
 //				   Rebuild Release 2.0.7.5
+//		24.07.23   Update JSpoutLIB with SpoutGL files 2.007.011
+//				   Update core.jar to Processing 4.2
+//				   Rebuild Release 2.0.7.6 (Version 8)
 //
 // ========================================================================================================
 
