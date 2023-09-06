@@ -109,6 +109,12 @@ package spout;
 //		24.07.23   Update JSpoutLIB with SpoutGL files 2.007.011
 //				   Update core.jar to Processing 4.2
 //				   Rebuild Release 2.0.7.6 (Version 8)
+//		25.07.23   Updated incorrect version display in JNISpout.java
+//				   Rebuild Release 2.0.7.6 (Version 8)
+//				   Update GitHub release spout.txt and spout.zip
+//		29.07.23   Change to core.jar Processing 4.3
+//		06.09.23   Update JSpoutLIB with SpoutGL files 2.007.012
+//				   Rebuild Release 2.0.7.7 (Version 9)
 //
 // ========================================================================================================
 
@@ -1264,7 +1270,7 @@ public class Spout {
 		JFrame jf=new JFrame();
         jf.setAlwaysOnTop(true);
         JOptionPane.showMessageDialog(jf, infoMessage, "Spout", JOptionPane.INFORMATION_MESSAGE);
-    }	
-
+    }
+	
 } // end class Spout
 

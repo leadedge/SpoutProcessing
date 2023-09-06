@@ -19,7 +19,7 @@ PGraphics pgr; // Graphics for demo
 Spout spout;
 
 void setup() {
-
+  
   // Initial window size
   size(640, 360, P3D);
   textureMode(NORMAL);
@@ -31,14 +31,14 @@ void setup() {
   pgr = createGraphics(1280, 720, P3D);
   
   // Load an image
-  img = loadImage("SpoutLogoMarble3.jpg");
+  img = loadImage("data/SpoutLogoMarble3.jpg");
   
   // The dimensions of graphics or image objects
   // do not have to be the same as the sketch window
     
   // CREATE A NEW SPOUT OBJECT
   spout = new Spout(this);
-  
+ 
   // Option - enable Spout logging to detect warnings and errors.
   // Note that the concolelogs will only show up in the sketch console
   // window after the sketch is closed and not while the sketch is running.
