@@ -115,6 +115,13 @@ package spout;
 //		29.07.23   Change to core.jar Processing 4.3
 //		06.09.23   Update JSpoutLIB with SpoutGL files 2.007.012
 //				   Rebuild Release 2.0.7.7 (Version 9)
+//		21.10.23   Add copyToClipBoard to JNISpout
+//				   Add optionBox and messageBox to spout class
+//				   Add infoBox, optionBox, messageBox to sender example 
+//				   Update sender examples to show sender data type
+//		28.11.23   Remove #define USE_COMPUTE_EXTENSIONS from SpoutGLextensions
+//				   For JNISpout library build (JSpoutLib)
+//				   Rebuild Release 2.0.7.8 (Version 10)
 //
 // ========================================================================================================
 
@@ -125,8 +132,14 @@ import processing.core.PGraphics;
 import processing.core.PImage;
 import processing.opengl.*;
 
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane; // for infoBox
+import javax.swing.JTextField;
+import javax.swing.JLabel; // For font
+import java.awt.*; // for font
+// LJ DEBUG
+import java.awt.event.*; // For listener
 
 /**
  * Main Class to use with Processing
@@ -169,7 +182,7 @@ public class Spout {
 			PGraphics.showWarning("Spout initialization failed");
 
 		this.parent = parent;
-		
+	
 		pgl = (PGraphicsOpenGL) parent.g;
 		dim[0] = 0; // Sender width
 		dim[1] = 0; // Sender height
@@ -573,8 +586,9 @@ public class Spout {
 		if(invertMode >= 0) bInvert = (invertMode == 1);
 		
 		// If not connected keep looking
-		if(!isConnected())
+		if(!isConnected()) {
 			return pgr;
+		}
 		
 		// Create a graphics object or adjust the graphics to the current sender size
 		if(pgr == null || dim[0] != pgr.width || dim[1] != pgr.height && dim[0] > 0 && dim[1] > 0) {
@@ -720,6 +734,27 @@ public class Spout {
 	}
 	
 	/**
+	 * Get the current sender OpenGL format
+	 * 
+	 * @return format
+	 */
+	public int getSenderFormat()
+	{
+		 return JNISpout.getSenderFormat(spoutPtr);
+	}
+	
+	/**
+	 * Get the current sender OpenGL format name
+	 * 
+	 * @return format name
+	 */
+	public String getSenderFormatName()
+	{
+		return JNISpout.getSenderFormatName(spoutPtr);
+	}
+	
+	
+	/**
 	 * Is the received frame new
 	 * 
 	 * isFrameNew can be used after receiving a texture 
@@ -787,6 +822,14 @@ public class Spout {
 	{
 		JNISpout.spoutLogLevel(level, spoutPtr);
 	}
+	
+	
+		
+	public boolean copyToClipBoard(String text)
+	{
+		return JNISpout.copyToClipBoard(text, spoutPtr);
+	}
+	
 	
 	/**
 	 * Log
@@ -1259,18 +1302,148 @@ public class Spout {
 	}
 	
 	/**
-	 * Pop up a MessageBox dialog
+	 * infoBox dialog  with message to show
 	 * 
-	 * @param infoMessage : the message to show
+	 * @param message : the message to show
+	 * 
 	 */
-	public void infoBox(String infoMessage)
+	public void infoBox(String message)
     {
-        // JOptionPane.showMessageDialog(null, infoMessage, "Spout", JOptionPane.INFORMATION_MESSAGE);
 		// Set message dialog topmost so it does not get lost
 		JFrame jf=new JFrame();
         jf.setAlwaysOnTop(true);
-        JOptionPane.showMessageDialog(jf, infoMessage, "Spout", JOptionPane.INFORMATION_MESSAGE);
+        
+        // Centre message and font larger than default
+        JLabel label = new JLabel(message);
+        label.setFont(new Font("Verdana", Font.PLAIN, 15));
+        label.setHorizontalAlignment(JLabel.CENTER);
+        
+        JOptionPane.showMessageDialog(jf, label, "Spout", JOptionPane.PLAIN_MESSAGE);
+        
     }
 	
+	/**
+	 * messageBox dialog with message, caption and style
+	 * 
+	 * @param message  - message text
+	 * @param caption  - MessageBox caption
+	 * @param style    - message style
+	 * 						0 - ERROR
+	 * 						1 - INFORMATION
+	 * 						2 - WARNING
+	 * 						3 - QUESTION
+	 * 						4 - PLAIN
+	 */
+	public void messageBox(String message, String caption, int messagestyle)
+	{
+		JFrame jf=new JFrame();
+        jf.setAlwaysOnTop(true);
+        
+        // Message font larger than default
+        JLabel label = new JLabel(message);
+        label.setFont(new Font("Verdana", Font.PLAIN, 15));
+       
+        int style = JOptionPane.ERROR_MESSAGE;
+        if(messagestyle == 1) style = JOptionPane.INFORMATION_MESSAGE;
+        if(messagestyle == 2) style = JOptionPane.WARNING_MESSAGE;
+        if(messagestyle == 3) style = JOptionPane.QUESTION_MESSAGE;
+        if(messagestyle == 4) {
+        	style = JOptionPane.PLAIN_MESSAGE;
+            label.setHorizontalAlignment(JLabel.CENTER);
+        }
+        
+        JOptionPane.showMessageDialog(jf, label, caption, style);
+	}
+	
+	/**
+	 * optionBox dialog with message, caption, buttons and style
+	 * 
+	 * @param message   - message to show
+	 * @param caption   - dialog caption
+	 * @param option    - option buttons
+	 *                    0 YES_NO_OPTION
+	 *                    1 YES_NO_CANCEL_OPTION
+	 *                    2 OK_CANCEL_OPTION 
+	 * @param style      - dialog style
+	 *                    1 INFORMATION
+	 *                    2 WARNING
+	 *                    3 QUESTION
+	 *                    4 PLAIN
+	 *                    
+	 * @return           - button pressed
+	 *                    0 YES / OK
+	 *                    1 NO
+	 *                    2 CANCEL
+	 *                   -1 CLOSED
+	 */
+	public int optionBox(String message, String caption, int messageoption, int messagestyle)
+	{
+		JFrame jf=new JFrame();
+        jf.setAlwaysOnTop(true);
+        
+    	// Message font larger than default
+        JLabel label = new JLabel(message);
+        label.setFont(new Font("Verdana", Font.PLAIN, 15));
+       
+        // Option buttons
+        // YES_NO_OPTION		0
+        // YES_NO_CANCEL_OPTION	1 
+        // OK_CANCEL_OPTION		2 
+        int buttons = JOptionPane.YES_NO_OPTION;
+        if(messageoption == 1) buttons = JOptionPane.YES_NO_CANCEL_OPTION;
+        if(messageoption == 2)	buttons = JOptionPane.OK_CANCEL_OPTION;
+        
+        int style = JOptionPane.ERROR_MESSAGE;
+        if(messagestyle == 1) style = JOptionPane.INFORMATION_MESSAGE;
+        if(messagestyle == 2) style = JOptionPane.WARNING_MESSAGE;
+        if(messagestyle == 3) style = JOptionPane.QUESTION_MESSAGE;
+        if(messagestyle == 4) {
+        	style = JOptionPane.PLAIN_MESSAGE;
+            label.setHorizontalAlignment(JLabel.CENTER);
+        }
+      
+        // Return values for showOptionDialog dialog
+        // YES_OPTION			 0 
+        // NO_OPTION			 1 
+        // CANCEL_OPTION 		 2
+        // OK_OPTION			 0 
+        // CLOSED_OPTION		-1
+        return JOptionPane.showOptionDialog(jf, label, caption, buttons, style, null, null, null);
+        
+	}
+	
+	
+	/**
+	 * entryBox dialog with user instruction
+	 * 
+	 * @param instruction - user instruction
+	 * @return            - entry string
+	 */	
+	public String entryBox(String instruction)
+	{
+		return entryBox(instruction, "");
+	}
+	
+	
+	/**
+	 * entryBox dialog with instruction and initial entry
+	 * 
+	 * @param instruction - user instruction
+	 * @param entry       - initial entry
+	 * @return            - entry string
+	 */
+	public String entryBox(String instruction, String entry)
+	{
+		JFrame jf=new JFrame();
+        jf.setAlwaysOnTop(true);
+        JLabel label = new JLabel(instruction);
+        label.setFont(new Font("Verdana", Font.PLAIN, 15));
+        
+        return JOptionPane.showInputDialog(jf, label, entry);
+        
+	}
+	
 } // end class Spout
+
+
 

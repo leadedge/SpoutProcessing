@@ -10,7 +10,7 @@ public class JNISpout {
 
 	// Java instead of operating system
 	String sunDataModel = System.getProperty("sun.arch.data.model");
-	System.out.println("Spout " + sunDataModel +"bit v2.0.7.7 - Java " + jvm_version);
+	System.out.println("Spout " + sunDataModel +"bit v2.0.7.8 - Java " + jvm_version);
 	// System.out.println("Java " + sunDataModel + "bit " + jvm_version);
 	if(sunDataModel.equals("32"))	
 		System.loadLibrary("JNISpout_32");
@@ -38,6 +38,8 @@ public class JNISpout {
   protected static native String getSenderName(long ptr);
   protected static native int getSenderWidth(long ptr);
   protected static native int getSenderHeight(long ptr);
+  protected static native int getSenderFormat(long ptr);
+  protected static native String getSenderFormatName(long ptr);
   
   // Frame count
   protected static native float getSenderFps(long ptr);
@@ -56,6 +58,9 @@ public class JNISpout {
   protected static native void spoutLogError(String logtext, long ptr);
   protected static native void spoutLogFatal(String logtext, long ptr);
   
+  // Utility
+  protected static native boolean copyToClipBoard(String text, long ptr);
+    
   // Common
   protected static native int getTextureID(long ptr);
   protected static native boolean getMemoryShareMode(long ptr);
