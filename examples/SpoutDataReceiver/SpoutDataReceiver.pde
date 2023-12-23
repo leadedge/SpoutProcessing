@@ -190,22 +190,19 @@ void draw() {
 void showInfo() {
   
     fill(255);
-
+  
     if(spout.isReceiverConnected()) {
-      // Report sender fps and frame number if the option is activated
-      // Applications < Spout 2.007 will have no frame information
-      if(spout.getSenderFrame() > 0) {
         text("Receiving from : " + spout.getSenderName() + "  (" 
              + spout.getSenderWidth() + "x" 
-             + spout.getSenderHeight() + ") - fps "
-             + spout.getSenderFps() + " : frame "
-             + spout.getSenderFrame(), 15, 30);
-      }
-      else {
-        text("Receiving from : " + spout.getSenderName() + "  (" 
-             + spout.getSenderWidth() + "x" 
-             + spout.getSenderHeight() + ")", 15, 30);
-      }
+             + spout.getSenderHeight() + " - "
+             + spout.getSenderFormatName() + ")", 15, 30);
+      
+        // Report sender fps and frame number if the option is activated
+        // Applications < Spout 2.007 will have no frame information
+        if(spout.getSenderFrame() > 0) {
+          text("fps : " + spout.getSenderFps() + " : frame "
+               + spout.getSenderFrame(), 15, 50);
+        }
     }
     else {
       text("No sender", 30, 30);

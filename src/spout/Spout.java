@@ -121,7 +121,9 @@ package spout;
 //				   Update sender examples to show sender data type
 //		28.11.23   Remove #define USE_COMPUTE_EXTENSIONS from SpoutGLextensions
 //				   For JNISpout library build (JSpoutLib)
-//				   Rebuild Release 2.0.7.8 (Version 10)
+//				   Rebuild Release 2.0.7.8 (Version 10) (maintencance release)
+//		24.12.23   Update JSoutLib to Spout Version 2.007.013
+//				   Rebuild Release 2.0.7.9 (Version 11)
 //
 // ========================================================================================================
 
@@ -788,7 +790,7 @@ public class Spout {
 		JNISpout.senderDialog(spoutPtr);
 	}
 	
-	/*
+	/**
 	 * Enable logging to default console output
 	 */
 	public void enableSpoutLog()
@@ -796,7 +798,7 @@ public class Spout {
 		JNISpout.enableSpoutLog(spoutPtr);
 	}
 	
-	/*
+	/**
 	 * Log to a file
 	 */
 	public void enableSpoutLogFile(String filename)
@@ -804,7 +806,7 @@ public class Spout {
 		JNISpout.spoutLogToFile(filename, false, spoutPtr);
 	}
 	
-	/*
+	/**
 	 * Append logs to a file
 	 */
 	public void enableSpoutLogFile(String filename, boolean append)
@@ -812,7 +814,7 @@ public class Spout {
 		JNISpout.spoutLogToFile(filename, append, spoutPtr);
 	}	
 	
-	/*
+	/**
 	 * Set the Spout log level
 	 * @param level
 	 * 0 - Disable : 1 - Verbose : 2 - Notice (default)
@@ -824,7 +826,11 @@ public class Spout {
 	}
 	
 	
-		
+	/**
+	 * Copy text to the clipboard
+	 * @param text - text to copy
+	 * 
+	 */
 	public boolean copyToClipBoard(String text)
 	{
 		return JNISpout.copyToClipBoard(text, spoutPtr);

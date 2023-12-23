@@ -102,8 +102,8 @@ void draw()  {
     // Draw the rotating cube
     pushMatrix();
     translate(width/2.0, height/2.0, -100);
-    rotateX(frameCount/60.0);
-    rotateY(frameCount/60.0);      
+    rotateX(frameCount/100.0);
+    rotateY(frameCount/100.0);      
     scale(110);
     TexturedCube(img);
     popMatrix();
@@ -179,9 +179,11 @@ void draw()  {
     text("Sending as : "
       + spout.getSenderName() + " ("
       + spout.getSenderWidth() + "x"
-      + spout.getSenderHeight() + ") - fps : "
-      + spout.getSenderFps() + " : frame "
-      + spout.getSenderFrame(), 15, 30);  
+      + spout.getSenderHeight() + ")", 15, 30);
+    if(spout.getSenderFrame() > 0) {
+      text("fps : " + spout.getSenderFps() + " : frame "
+        + spout.getSenderFrame(), 15, 50);
+    }
    
 }
 

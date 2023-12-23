@@ -25,7 +25,7 @@ void setup() {
   size(640, 360, P3D);
   
   // Screen text size
-  textSize(16);
+  textSize(18);
 
   // Needed for resizing the window to the sender size
   // Processing 3+ only
@@ -39,12 +39,12 @@ void setup() {
   // but you can specify the name of the sender to receive from.
   // The receiver will then attempt to connect to that sender
   // spout.setReceiverName("Spout Demo Sender");
-    
+  
 } 
 
 
 void draw() {
-    
+  
     //  
     // RECEIVE FROM A SENDER
     //
@@ -52,11 +52,13 @@ void draw() {
     // OPTION 1: Receive and draw the texture
     if(spout.receiveTexture())
         spout.drawTexture();
-     
+    
     // OPTION 2: Receive into PGraphics
     // pgr = spout.receiveTexture(pgr);
-    // if(pgr != null)
+    // if(pgr != null) {
       // image(pgr, 0, 0, width, height);
+      // showInfo();
+    // }
     
     // OPTION 3: Receive into PImage texture
     // img = spout.receiveTexture(img);
@@ -81,22 +83,20 @@ void draw() {
 void showInfo() {
   
     fill(255);
-
+  
     if(spout.isReceiverConnected()) {
-      // Report sender fps and frame number if the option is activated
-      // Applications < Spout 2.007 will have no frame information
-      if(spout.getSenderFrame() > 0) {
+      
         text("Receiving from : " + spout.getSenderName() + "  (" 
              + spout.getSenderWidth() + "x" 
-             + spout.getSenderHeight() + ") - fps "
-             + spout.getSenderFps() + " : frame "
-             + spout.getSenderFrame(), 15, 30);
-      }
-      else {
-        text("Receiving from : " + spout.getSenderName() + "  (" 
-             + spout.getSenderWidth() + "x" 
-             + spout.getSenderHeight() + ")", 15, 30);
-      }
+             + spout.getSenderHeight() + " - "
+             + spout.getSenderFormatName() + ")", 15, 30);
+      
+        // Report sender fps and frame number if the option is activated
+        // Applications < Spout 2.007 will have no frame information
+        if(spout.getSenderFrame() > 0) {
+          text("fps  " + spout.getSenderFps() + "  :  frame "
+               + spout.getSenderFrame(), 15, 50);
+        }
     }
     else {
       text("No sender", 30, 30);

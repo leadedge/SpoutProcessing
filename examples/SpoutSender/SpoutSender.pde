@@ -23,9 +23,9 @@ void setup() {
   // Initial window size
   size(640, 360, P3D);
   textureMode(NORMAL);
-  
+   
   // Screen text size
-  textSize(16);
+  textSize(18);
   
   // Create a graphics object
   pgr = createGraphics(1280, 720, P3D);
@@ -81,7 +81,7 @@ void setup() {
   //     spout.setLogLevel(1);
   //     spout.spoutLogVerbose("Message");
   //
-
+  
   // GIVE THE SENDER A NAME
   // A sender can be given any name.
   // Otherwise the sketch folder name is used
@@ -90,8 +90,13 @@ void setup() {
   
   // Option - set the sketch frame rate.
   // Receivers 2.007 or higher will detect this rate
-  frameRate(30);
+  // frameRate(30);
   
+  //
+  // Option - infoBox, messageBox, optionBox, inputBox
+  // Can be used within the sketch as required
+  // Refer to Spout for Processing, Spout class library reference
+ 
 } 
 
 void draw()  { 
@@ -103,8 +108,8 @@ void draw()  {
     // Draw the rotating cube
     pushMatrix();
     translate(width/2.0, height/2.0, -100);
-    rotateX(frameCount/60.0);
-    rotateY(frameCount/60.0);      
+    rotateX(frameCount/100.0);
+    rotateY(frameCount/100.0);      
     scale(110);
     TexturedCube(img);
     popMatrix();
@@ -142,9 +147,11 @@ void draw()  {
     text("Sending as : "
       + spout.getSenderName() + " ("
       + spout.getSenderWidth() + "x"
-      + spout.getSenderHeight() + ") - fps : "
-      + spout.getSenderFps() + " : frame "
-      + spout.getSenderFrame(), 15, 30);  
+      + spout.getSenderHeight() + ")", 15, 30);
+    if(spout.getSenderFrame() > 0) {
+      text("fps " + spout.getSenderFps() + "  :  frame "
+        + spout.getSenderFrame(), 15, 50);
+    }
    
 }
 
