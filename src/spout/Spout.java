@@ -124,9 +124,23 @@ package spout;
 //				   Rebuild Release 2.0.7.8 (Version 10) (maintencance release)
 //		24.12.23   Update JSoutLib to Spout Version 2.007.013
 //				   Rebuild Release 2.0.7.9 (Version 11)
+//		15.03.24   Add MessageBox, editBox and comboBox utilities
+//				      spoutMessgeBox(message)
+//				      spoutMessgeBox(caption, message)
+//				      spoutMessgeBox(caption, message, timeout)
+//				      spoutMessgeBox(caption, message, type, timeout)
+//				      spoutMessgeBox(caption, message, type, instruction, timeout)
+//				      spoutEditBox(caption);
+//					  spoutEditBox(caption, message);
+//				      spoutComboBox(caption);
+//				      spoutComboBox(caption, message);
+//				   Add SpoutUtils example Processing sketch
+//				   Revise Utility sketch to include edit control existing text
+//		27.08.24   Update JNISpout libraries 2.007.015
+//				   Rebuild Release 2.0.8.0 (Version 12)
+//
 //
 // ========================================================================================================
-
 
 import processing.core.PApplet;
 import processing.core.PConstants;
@@ -140,8 +154,7 @@ import javax.swing.JOptionPane; // for infoBox
 import javax.swing.JTextField;
 import javax.swing.JLabel; // For font
 import java.awt.*; // for font
-// LJ DEBUG
-import java.awt.event.*; // For listener
+
 
 /**
  * Main Class to use with Processing
@@ -166,7 +179,27 @@ public class Spout {
 	int invertMode; // User setting for texture invert
 	int bufferSize; // shared memory buffer size
 	
-	/**
+	//
+	// For spoutMessageBox
+	//
+	// Buttons
+	public final int MB_OK				= 0x00;
+	public final int MB_OKCANCEL		= 0x01;
+	public final int MB_YESNOCANCEL		= 0x03;
+	public final int MB_YESNO			= 0x04;
+	// Icons
+	public final int MB_ICONERROR       = 0x10;
+	public final int MB_ICONWARNING     = 0x30;
+	public final int MB_ICONINFORMATION = 0x40;
+	// Topmost
+	public final int MB_TOPMOST         = 0x00040000;
+	// Return
+	public final int IDOK     = 1;
+	public final int IDCANCEL = 2;
+	public final int IDYES    = 6;
+	public final int IDNO     = 7;
+	
+	/*
 	 * Create a Spout Object.
 	 * 
 	 * A spout object is created within the JNI dll
@@ -329,6 +362,7 @@ public class Spout {
 			bSenderInitialized = false;
 		}
 	} 
+	
 
 	/**
 	 *	Write the sketch drawing surface texture to 
@@ -734,7 +768,7 @@ public class Spout {
 	{
 		 return JNISpout.getSenderFrame(spoutPtr);
 	}
-	
+		
 	/**
 	 * Get the current sender OpenGL format
 	 * 
@@ -754,8 +788,7 @@ public class Spout {
 	{
 		return JNISpout.getSenderFormatName(spoutPtr);
 	}
-	
-	
+		
 	/**
 	 * Is the received frame new
 	 * 
@@ -790,6 +823,8 @@ public class Spout {
 		JNISpout.senderDialog(spoutPtr);
 	}
 	
+	// =======================  spoutLog ======================
+
 	/**
 	 * Enable logging to default console output
 	 */
@@ -896,7 +931,264 @@ public class Spout {
 	{
 		JNISpout.spoutLogFatal(text, spoutPtr);
 	}
+	
+	// =======================  end spoutLog ======================
 
+	
+		
+	// ======================  spoutMessagebox =====================
+
+	/** 
+	 * MessageBox with message
+	 * @param message  - message text
+	 * @return - IDOK
+	 */
+	public int spoutMessageBox(String message)
+	{
+		return JNISpout.spoutMessageBox(message, "Message", MB_OK, "", 0, spoutPtr);
+	}	
+	
+	/** 
+	 * MessageBox with message and timeout
+	 * @param message  - message text
+	 * @param timeout  - milliseconds timeout
+	 * @return - IDOK
+	 */
+	public int spoutMessageBox(String message, long timeout)
+	{
+		return JNISpout.spoutMessageBox(message, "Message", MB_OK, "", (int)timeout, spoutPtr);
+	}
+	
+	/** 
+	 * MessageBox with and message and caption
+	 * @param message  - message text
+	 * @param caption  - caption text
+	 * @return - IDOK
+	 */
+	public int spoutMessageBox(String message, String caption)
+	{
+		return JNISpout.spoutMessageBox(message, caption, MB_OK, "", 0, spoutPtr);
+	}
+	
+	/** 
+	 * MessageBox with message, caption and timeout
+	 * @param message  - message text
+	 * @param caption  - caption text
+	 * @param timeout  - milliseconds timeout
+	 * @return - IDOK
+	 */
+	public int spoutMessageBox(String message, String caption, long timeout)
+	{
+		return JNISpout.spoutMessageBox(message, caption, MB_OK, "", (int)timeout, spoutPtr);
+	}
+	
+	/** 
+	 * MessageBox with message, caption and type
+	 * @param message  - message text
+	 * @param caption  - caption text
+	 * @param type     - button and icon types
+	 * 
+	 * Buttons
+	 *   MB_OK
+	 *   MB_OKCANCEL
+	 *   MB_YESNOCANCEL
+	 *   MB_YESNO
+	 * Icons
+	 *   MB_ICONERROR
+	 *   MB_ICONWARNING
+	 *   MB_ICONINFORMATION
+	 * Topmost
+	 *   MB_TOPMOST
+	 *
+	 * Buttons and icons can be combined for the MessageBox type
+	 * For example : MB_ICONERROR | MB_YESNO
+	 *                    
+	 * @return - button pressed
+	 *    IDOK      1
+	 *    IDCANCEL  2
+	 *    IDYES     6
+	 *    IDNO      7
+	 */
+	public int spoutMessageBox(String message, String caption, int type)
+	{
+		return JNISpout.spoutMessageBox(message, caption, type, "", 0, spoutPtr);
+	}
+	
+	/** 
+	 * MessageBox with message, caption, type and timeout
+	 * @param message  - message text
+	 * @param caption  - caption text
+	 * @param type     - button and icon types
+	 * @param timeout  - milliseconds timeout
+	 */ 
+	public int spoutMessageBox(String message, String caption, int type, long timeout)
+	{
+		return JNISpout.spoutMessageBox(message, caption, type, "", (int)timeout, spoutPtr);
+	}
+	
+	/** 
+	 * spoutMessageBox
+	 * 
+	 * MessageBox with message, caption, type, main instruction
+	 * @param message     - message text
+	 * @param caption     - caption text
+	 * @param type        - button and icon types
+	 * @param instruction - main instruction in large text
+	 * 	 
+	 * Buttons
+	 *   MB_OK
+	 *   MB_OKCANCEL
+	 *   MB_YESNOCANCEL
+	 *   MB_YESNO
+	 * Icons
+	 *   MB_ICONERROR
+	 *   MB_ICONWARNING
+	 *   MB_ICONINFORMATION
+	 * Topmost
+	 *   MB_TOPMOST
+	 *
+	 * Buttons and icons can be combined for the MessageBox type
+	 * For example : MB_ICONERROR | MB_YESNO
+	 *                    
+	 * @return - button pressed
+	 *    IDOK      1
+	 *    IDCANCEL  2
+	 *    IDYES     6
+	 *    IDNO      7
+	 */
+	public int spoutMessageBox(String message, String caption, int type, String instruction)
+	{
+		return JNISpout.spoutMessageBox(message, caption, type, instruction, 0, spoutPtr);
+	}
+	
+	/** 
+	 * spoutMessageBox
+	 * 
+	 * MessageBox with message, caption, type, main instruction and timeout
+	 * @param message     - message text
+	 * @param caption     - caption text
+	 * @param type        - button and icon types
+	 * @param instruction - main instruction in large text
+	 * @param timeout     - timeout in milliseconds
+	 */
+	public int spoutMessageBox(String message, String caption, int type, String instruction, long timeout)
+	{
+		return JNISpout.spoutMessageBox(message, caption, type, instruction, (int)timeout, spoutPtr);
+	}
+	
+	/**
+	 * Custom icon for SpoutMessageBox
+	 * @param iconfile - full path to the icon file (type ".ico")
+	 * Use with MB_USERICON
+	 */
+	 public void spoutMessageBoxIcon(String iconfile)
+	 {
+		 JNISpout.spoutMessageBoxIcon(iconfile, spoutPtr);
+	 }
+	 
+	/**
+	 * Custom button for SpoutMessageBox
+	 * @param ID	- button identifier number for return
+	 * @param title	- button title
+	 * @param ptr
+	 */
+	 public void spoutMessageBoxButton(int ID, String title)
+	 {
+		 JNISpout.spoutMessageBoxButton(ID, title, spoutPtr);
+	 }
+	 
+	/**
+	 * MessageBox with edit control for text input
+	 * with caption
+	 * 
+	 * @param caption - Caption text
+	 */  
+	 public String spoutEditBox(String caption)
+	 {
+		 return JNISpout.spoutEditBox(null, caption, null, spoutPtr);
+	 }
+	 
+		
+	 /**
+	 * MessageBox with edit control for text input
+	 * with message and caption
+	 * 
+	 * @param caption - Message text
+	 * @param caption - Caption text
+	 */
+	 public String spoutEditBox(String message, String caption)
+	 {
+		return JNISpout.spoutEditBox(message, caption, null, spoutPtr);
+	 }
+	 
+	 /**
+	 * MessageBox with edit control for text input
+	 * with message and caption and existing text.
+	 * 
+	 * @param message - Message text
+	 * @param caption - Caption text
+	 * @param text    - existing text
+	 */
+	 public String spoutEditBox(String message, String caption, String text)
+	 {
+		return JNISpout.spoutEditBox(message, caption, text, spoutPtr);
+	 }
+	 
+	 
+	 /**
+	 * MessageBox with combo box control for item selection
+	 * with caption
+	 * 
+	 * @param caption - Caption text
+	 * @param items   - Array of items for selection
+	 */
+	 public int spoutComboBox(String caption, String[] items)
+	 {
+		return JNISpout.spoutComboBox(null, caption, items, spoutPtr);
+	 }
+	 
+	 /**
+	 * MessageBox with combo box control for item selection
+	 * with message and caption
+	 * 
+	 * @param caption - Message text
+	 * @param caption - Caption text
+	 * @param items   - Array of items for selection
+	 */
+	 public int spoutComboBox(String message, String caption, String[] items)
+	 {
+		return JNISpout.spoutComboBox(message, caption, items, spoutPtr);
+	 }
+	 
+
+	/**
+	 * Centre SpoutMessageBox on the sketch window.
+	 * If disabled (default) centres on the desktop.
+	 * 
+	 * @param bMode - mode (true or false)
+	 */
+	 public void spoutMessageBoxWindow(boolean bMode)
+	 {
+		 JNISpout.spoutMessageBoxWindow(bMode, spoutPtr); 		 
+	 }
+
+	/**
+	 * Modeless mode
+	 * 
+	 * By default, spoutMessageBox opens centred on the desktop.
+	 * With spoutMessageBoxWindow enabled, the messagebox opens
+	 * centred on the sketch window. This can be disabled again.
+	 * 
+	 * @param bMode - mode (true or false)
+	 */
+	 public void spoutMessageBoxModeless(boolean bMode)
+	 {
+		 JNISpout.spoutMessageBoxModeless(bMode, spoutPtr); 		 
+	 }
+	 
+	 // ======================= end spoutMessagebox ======================
+	 
+		 
 	/**
 	 * Resize the receiver drawing surface and sketch window to that of the sender
 	 * 
@@ -1308,10 +1600,9 @@ public class Spout {
 	}
 	
 	/**
-	 * infoBox dialog  with message to show
+	 * infoBox dialog with message
 	 * 
 	 * @param message : the message to show
-	 * 
 	 */
 	public void infoBox(String message)
     {
@@ -1397,7 +1688,7 @@ public class Spout {
         // OK_CANCEL_OPTION		2 
         int buttons = JOptionPane.YES_NO_OPTION;
         if(messageoption == 1) buttons = JOptionPane.YES_NO_CANCEL_OPTION;
-        if(messageoption == 2)	buttons = JOptionPane.OK_CANCEL_OPTION;
+        if(messageoption == 2) buttons = JOptionPane.OK_CANCEL_OPTION;
         
         int style = JOptionPane.ERROR_MESSAGE;
         if(messagestyle == 1) style = JOptionPane.INFORMATION_MESSAGE;
@@ -1418,7 +1709,6 @@ public class Spout {
         
 	}
 	
-	
 	/**
 	 * entryBox dialog with user instruction
 	 * 
@@ -1435,18 +1725,17 @@ public class Spout {
 	 * entryBox dialog with instruction and initial entry
 	 * 
 	 * @param instruction - user instruction
-	 * @param entry       - initial entry
+	 * @param entry       - Intitial entry string
 	 * @return            - entry string
 	 */
 	public String entryBox(String instruction, String entry)
 	{
 		JFrame jf=new JFrame();
-        jf.setAlwaysOnTop(true);
+		jf.setAlwaysOnTop(true);
         JLabel label = new JLabel(instruction);
         label.setFont(new Font("Verdana", Font.PLAIN, 15));
         
         return JOptionPane.showInputDialog(jf, label, entry);
-        
 	}
 	
 } // end class Spout

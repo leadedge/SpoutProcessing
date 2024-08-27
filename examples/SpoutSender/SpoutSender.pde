@@ -24,27 +24,24 @@ void setup() {
   size(640, 360, P3D);
   textureMode(NORMAL);
    
-  // Screen text size
   textSize(18);
-  
-  // Create a graphics object
   pgr = createGraphics(1280, 720, P3D);
-  
-  // Load an image
   img = loadImage("data/SpoutLogoMarble3.jpg");
-  
-  // The dimensions of graphics or image objects
-  // do not have to be the same as the sketch window
-    
-  // CREATE A NEW SPOUT OBJECT
   spout = new Spout(this);
- 
-  // Option - enable Spout logging to detect warnings and errors.
-  // Note that the concolelogs will only show up in the sketch console
-  // window after the sketch is closed and not while the sketch is running.
+  spout.setSenderName("Spout Sender");
+    
+  //
+  // Option - logging
+  //
+  // Enable Spout logging to detect warnings and errors.
+  //
+  // Note that the logs will show up in the sketch console
+  // window only after the sketch is closed and not while
+  // the sketch is running.
+  //
   // spout.enableSpoutLog();
   //
-  // You can set the level above which the logs are shown
+  // Set the level above which the logs are shown
   // 0 : SPOUT_LOG_SILENT
   // 1 : SPOUT_LOG_VERBOSE
   // 2 : SPOUT_LOG_NOTICE (default)
@@ -82,25 +79,29 @@ void setup() {
   //     spout.spoutLogVerbose("Message");
   //
   
-  // GIVE THE SENDER A NAME
-  // A sender can be given any name.
-  // Otherwise the sketch folder name is used
-  // the first time "sendTexture" is called.  
-  spout.setSenderName("Spout Processing Sender");
-  
   // Option - set the sketch frame rate.
   // Receivers 2.007 or higher will detect this rate
   // frameRate(30);
   
-  //
-  // Option - infoBox, messageBox, optionBox, inputBox
-  // Can be used within the sketch as required
-  // Refer to Spout for Processing, Spout class library reference
- 
-} 
+  // Refer to the "SpoutUtils" example for details
+  // of logging and messagebox utility functions
+  
+} // end setup 
 
 void draw()  { 
 
+    background(0, 90, 100);
+    noStroke();
+
+    // Draw the rotating cube
+    pushMatrix();
+    translate(width/2.0, height/2.0, -100);
+    rotateX(frameCount/100.0);
+    rotateY(frameCount/100.0);      
+    scale(110);
+    TexturedCube(img);
+    popMatrix();
+    
     background(0, 90, 100);
     noStroke();
 
@@ -113,7 +114,6 @@ void draw()  {
     scale(110);
     TexturedCube(img);
     popMatrix();
-    
     // Send at the size of the window    
     spout.sendTexture();
     
@@ -142,7 +142,7 @@ void draw()  {
     // Send at the size of the image
     spout.sendTexture(img);
     */
-
+  
     // Display info
     text("Sending as : "
       + spout.getSenderName() + " ("
@@ -152,8 +152,21 @@ void draw()  {
       text("fps " + spout.getSenderFps() + "  :  frame "
         + spout.getSenderFrame(), 15, 50);
     }
+    text("'n' - change sender name", 15, height-10); 
    
 }
+
+void keyReleased()
+{
+  if(key == 'n') {
+    String name = spout.spoutEditBox("Enter a new sender name");
+    if(name != null) {
+      spout.closeSender();
+      spout.setSenderName(name);
+    }
+  }
+}
+
 
 void TexturedCube(PImage tex) {
   

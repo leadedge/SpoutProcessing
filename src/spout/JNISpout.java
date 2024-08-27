@@ -58,6 +58,15 @@ public class JNISpout {
   protected static native void spoutLogError(String logtext, long ptr);
   protected static native void spoutLogFatal(String logtext, long ptr);
   
+  // MessageBox
+  protected static native int spoutMessageBox(String message, String caption, int type, String instruction, int timeout, long ptr);
+  protected static native void spoutMessageBoxIcon(String iconfile, long ptr);
+  protected static native void spoutMessageBoxButton(int ID, String title, long ptr);  
+  protected static native void spoutMessageBoxModeless(boolean bMode, long ptr); 
+  protected static native String spoutEditBox(String message, String caption, String text, long ptr);  
+  protected static native int spoutComboBox(String message, String caption, String[] items, long ptr); 
+  protected static native void spoutMessageBoxWindow(boolean bEnable, long ptr); 
+  
   // Utility
   protected static native boolean copyToClipBoard(String text, long ptr);
     
